@@ -12,6 +12,8 @@ import SubCategory from './models/subcategory.js';
 import Product from './models/product.js';
 import Stock from './models/stock.js';
 import StockTransaction from './models/stocktransaction.js';
+import Permission from './models/permission.js';
+import Role from './models/role.js';
 
 // --- Load Seeder Data ---
 import { divisions } from './seeder/divisions.js';
@@ -21,6 +23,8 @@ import { createUsers } from './seeder/users.js';
 import { categories } from './seeder/categories.js';
 import { createSubCategories } from './seeder/subcategories.js';
 import { createProducts } from './seeder/products.js';
+import { permissions } from './seeder/permissions.js';
+import { createRoles } from './seeder/roles.js';
 
 dotenv.config();
 
@@ -32,6 +36,8 @@ const clearData = async () => {
     await SubCategory.deleteMany();
     await Category.deleteMany();
     await User.deleteMany();
+    await Role.deleteMany();
+    await Permission.deleteMany();
     await Warehouse.deleteMany();
     await Station.deleteMany();
     await Division.deleteMany();
@@ -43,7 +49,24 @@ const clearData = async () => {
 
 const seedData = async () => {
   try {
-    // 1. Divisions
+    // 1. Permissions
+    const createdPermissions = await Permission.insertMany(permissions);
+    const permMap = createdPermissions.reduce((acc, p) => {
+      acc[`${p.module}.${p.name}`] = p._id;
+      return acc;
+    }, {});
+    console.log('Permissions seeded...');
+
+    // 2. Roles
+    const roles = createRoles(permMap);
+    const createdRoles = await Role.insertMany(roles);
+    const roleMap = createdRoles.reduce((acc, r) => {
+      acc[r.name] = r._id;
+      return acc;
+    }, {});
+    console.log('Roles seeded...');
+
+    // 3. Divisions
     const createdDivisions = await Division.insertMany(divisions);
     const divisionMap = createdDivisions.reduce((acc, d) => {
       acc[d.division_name] = d._id;
@@ -51,21 +74,25 @@ const seedData = async () => {
     }, {});
     console.log('Divisions seeded...');
 
-    // 2. Stations
-    const stations = createStations(divisionMap);
-    const createdStations = await Station.insertMany(stations);
+    // 4. Stations
+    const stationData = createStations(divisionMap);
+    const createdStations = await Station.insertMany(stationData);
     const stationMap = createdStations.reduce((acc, s) => {
       acc[s.station_name] = s._id;
       return acc;
     }, {});
     console.log('Stations seeded...');
 
-    // 3. Warehouses
-    const warehouses = createWarehouses(stationMap);
-    await Warehouse.insertMany(warehouses);
+    // 5. Warehouses
+    const warehouseData = createWarehouses(stationMap);
+    const createdWarehouses = await Warehouse.insertMany(warehouseData);
+    const warehouseMap = createdWarehouses.reduce((acc, w) => {
+      acc[w.warehouse_name] = w._id;
+      return acc;
+    }, {});
     console.log('Warehouses seeded...');
 
-    // 4. Categories
+    // 6. Categories
     const createdCategories = await Category.insertMany(categories);
     const categoryMap = createdCategories.reduce((acc, c) => {
       acc[c.category_name] = c._id;
@@ -73,23 +100,23 @@ const seedData = async () => {
     }, {});
     console.log('Categories seeded...');
 
-    // 5. SubCategories
-    const subCategories = createSubCategories(categoryMap);
-    const createdSubCategories = await SubCategory.insertMany(subCategories);
+    // 7. SubCategories
+    const subCategoryData = createSubCategories(categoryMap);
+    const createdSubCategories = await SubCategory.insertMany(subCategoryData);
     const subCategoryMap = createdSubCategories.reduce((acc, s) => {
       acc[s.sub_category_name] = s._id;
       return acc;
     }, {});
     console.log('SubCategories seeded...');
 
-    // 6. Products
-    const products = createProducts(categoryMap, subCategoryMap);
-    await Product.insertMany(products);
+    // 8. Products
+    const productData = createProducts(categoryMap, subCategoryMap);
+    await Product.insertMany(productData);
     console.log('Products seeded...');
 
-    // 7. Users
-    const users = await createUsers(stationMap, divisionMap);
-    await User.insertMany(users);
+    // 9. Users
+    const userData = await createUsers(roleMap, stationMap, divisionMap, warehouseMap);
+    await User.insertMany(userData);
     console.log('Users seeded...');
 
     console.log('Data Seeding Complete!');
@@ -102,13 +129,8 @@ const seedData = async () => {
 
 const run = async () => {
   await connectDB();
-  if (process.argv[2] === '-d') {
-    await clearData();
-    process.exit();
-  } else {
-    await clearData();
-    await seedData();
-  }
+  await clearData();
+  await seedData();
 };
 
 run();

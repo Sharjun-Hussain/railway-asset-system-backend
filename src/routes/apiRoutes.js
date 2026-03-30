@@ -12,42 +12,60 @@ import {
 import {
     getStock, handleTransaction, getTransactions
 } from '../controllers/inventoryController.js';
-import { protect, authorizeRoles, checkScope } from '../middlewares/authmiddleware.js';
+import {
+    getPermissions, createPermission,
+    getRoles, createRole, updateRole, deleteRole
+} from '../controllers/roleController.js';
+import { protect, hasPermission, checkScope } from '../middlewares/authmiddleware.js';
 
 const router = express.Router();
 
+// --- Role & Permission Management ---
+router.route('/permissions')
+    .get(protect, hasPermission('rbac', 'view'), getPermissions)
+    .post(protect, hasPermission('rbac', 'manage'), createPermission);
+
+router.route('/roles')
+    .get(protect, hasPermission('rbac', 'view'), getRoles)
+    .post(protect, hasPermission('rbac', 'manage'), createRole);
+
+router.route('/roles/:id')
+    .put(protect, hasPermission('rbac', 'manage'), updateRole)
+    .delete(protect, hasPermission('rbac', 'manage'), deleteRole);
+
 // --- Location Routes ---
 router.route('/divisions')
-    .get(protect, getDivisions)
-    .post(protect, authorizeRoles('Super Admin'), createDivision);
+    .get(protect, hasPermission('location', 'view'), getDivisions)
+    .post(protect, hasPermission('location', 'manage'), createDivision);
 
 router.route('/stations')
-    .get(protect, getStations)
-    .post(protect, authorizeRoles('Super Admin', 'Division Manager'), createStation);
+    .get(protect, hasPermission('location', 'view'), getStations)
+    .post(protect, hasPermission('location', 'manage'), createStation);
 
 router.route('/warehouses')
-    .get(protect, getWarehouses)
-    .post(protect, authorizeRoles('Super Admin', 'Division Manager', 'Station Master'), createWarehouse);
+    .get(protect, hasPermission('location', 'view'), getWarehouses)
+    .post(protect, hasPermission('location', 'manage'), createWarehouse);
 
 // --- Asset Routes ---
 router.route('/categories')
-    .get(protect, getCategories)
-    .post(protect, authorizeRoles('Super Admin'), createCategory);
+    .get(protect, hasPermission('product', 'view'), getCategories)
+    .post(protect, hasPermission('product', 'manage'), createCategory);
 
 router.route('/subcategories')
-    .get(protect, getSubCategories)
-    .post(protect, authorizeRoles('Super Admin'), createSubCategory);
+    .get(protect, hasPermission('product', 'view'), getSubCategories)
+    .post(protect, hasPermission('product', 'manage'), createSubCategory);
 
 router.route('/products')
-    .get(protect, getProducts)
-    .post(protect, authorizeRoles('Super Admin'), createProduct);
+    .get(protect, hasPermission('product', 'view'), getProducts)
+    .post(protect, hasPermission('product', 'manage'), createProduct);
 
 // --- Inventory Routes ---
 router.route('/stock')
-    .get(protect, getStock);
+    .get(protect, hasPermission('stock', 'view'), getStock);
 
 router.route('/transactions')
-    .get(protect, getTransactions)
-    .post(protect, handleTransaction);
+    .get(protect, hasPermission('stock', 'view'), getTransactions)
+    .post(protect, hasPermission('stock', 'receive'), handleTransaction);
 
 export default router;
+
