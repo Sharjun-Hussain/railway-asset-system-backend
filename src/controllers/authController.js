@@ -152,3 +152,124 @@ export const getMe = async (req, res) => {
   // req.user is available from 'protect' middleware
   res.status(200).json(req.user);
 };
+
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    // IMPORTANT: Always send a success response, even if user isn't found.
+    // This prevents attackers from checking which emails are registered.
+    if (!user) {
+      return res.status(200).json({ message: 'If an account with this email exists, a password reset link has been sent.' });
+    }
+
+    // 1. Generate a random token
+    // We create a random token, then hash it before saving to the DB.
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // 2. Hash token and set to user model
+    user.passwordResetToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+    
+    // 3. Set token expiration (e.g., 10 minutes)
+    user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    
+    await user.save();
+
+    // 4. Create reset URL
+    // The 'resetToken' (unhashed) is sent to the user.
+    const resetUrl = `${req.protocol}://${req.get('host')}/resetpassword/${resetToken}`;
+    
+    // 5. Send the email (this is a placeholder, you'll need a mail service)
+    try {
+      // --- TODO: Implement your email sending logic here ---
+      // Example: await sendEmail(user.email, 'Password Reset', `Click here to reset: ${resetUrl}`);
+      console.log('--- PASSWORD RESET ---');
+      console.log(`User: ${user.email}`);
+      console.log(`Reset URL: ${resetUrl}`);
+      console.log('---------------------');
+      // ----------------------------------------------------
+
+      res.status(200).json({ message: 'If an account with this email exists, a password reset link has been sent.' });
+    } catch (err) {
+      console.error('Email sending error:', err);
+      // Clear token if email fails
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
+      res.status(500).json({ message: 'Error sending reset email.' });
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// ---------------------------------------------
+// --- ADD NEW resetPassword CONTROLLER ---
+// ---------------------------------------------
+export const resetPassword = async (req, res) => {
+  const { password } = req.body;
+  const { resettoken } = req.params;
+
+  try {
+    // 1. Get the hashed token from the URL parameter
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resettoken)
+      .digest('hex');
+
+    // 2. Find user by the hashed token AND check if it's expired
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() } // Check if expiry is in the future
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token.' });
+    }
+
+    // 3. Set the new password
+    // The 'pre-save' hook on your User model will automatically hash this.
+    user.password = password;
+
+    // 4. Invalidate the token
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save();
+
+    // 5. (Optional but recommended) Log the user in
+    // Create new tokens
+    const accessToken = generateAccessToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    // Set the cookie
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    // Send response
+    res.status(200).json({
+      message: 'Password reset successful. You are now logged in.',
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      roles: user.roles,
+      accessToken: accessToken,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
