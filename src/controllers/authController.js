@@ -6,10 +6,11 @@ import crypto from 'crypto';
 
 // --- Helper Functions ---
 const generateAccessToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id }, process.env.JWT_ACCESS_SECRET, {
     expiresIn: '1d',
   });
 };
+
 
 const generateRefreshToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET || 'refresh_secret', {
