@@ -9,8 +9,11 @@ const userSchema = new mongoose.Schema({
   stationId: { type: mongoose.Schema.Types.ObjectId, ref: "Station" },
   warehouseIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Warehouse" }], // Particular warehouse staff
   isActive: { type: Boolean, default: true },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
 
 export default mongoose.model("User", userSchema);
