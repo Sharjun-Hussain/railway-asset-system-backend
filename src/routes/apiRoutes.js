@@ -35,16 +35,17 @@ router.route('/roles/:id')
 
 // --- Location Routes ---
 router.route('/divisions')
-    .get(protect, hasPermission('location', 'view'), getDivisions)
-    .post(protect, hasPermission('location', 'manage'), createDivision);
+    .get(protect, hasPermission('division', 'view'), getDivisions)
+    .post(protect, hasPermission('division', 'manage'), createDivision);
 
 router.route('/stations')
-    .get(protect, hasPermission('location', 'view'), getStations)
-    .post(protect, hasPermission('location', 'manage'), createStation);
+    .get(protect, hasPermission('station', 'view'), getStations)
+    .post(protect, hasPermission('station', 'manage'), createStation);
 
 router.route('/warehouses')
-    .get(protect, hasPermission('location', 'view'), getWarehouses)
-    .post(protect, hasPermission('location', 'manage'), createWarehouse);
+    .get(protect, hasPermission('warehouse', 'view'), getWarehouses)
+    .post(protect, hasPermission('warehouse', 'manage'), createWarehouse);
+
 
 // --- Asset Routes ---
 router.route('/categories')

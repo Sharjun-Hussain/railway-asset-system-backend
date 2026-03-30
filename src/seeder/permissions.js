@@ -3,9 +3,18 @@ export const permissions = [
     { module: "rbac", name: "view", description: "View roles and permissions" },
     { module: "rbac", name: "manage", description: "Create, update, and delete roles/permissions" },
 
-    // Location Module
-    { module: "location", name: "view", description: "View divisions, stations, and warehouses" },
-    { module: "location", name: "manage", description: "Manage geographical hierarchy" },
+    // Division Module
+    { module: "division", name: "view", description: "View divisions" },
+    { module: "division", name: "manage", description: "Manage divisions" },
+
+    // Station Module
+    { module: "station", name: "view", description: "View stations" },
+    { module: "station", name: "manage", description: "Manage stations" },
+
+    // Warehouse Module
+    { module: "warehouse", name: "view", description: "View warehouses" },
+    { module: "warehouse", name: "manage", description: "Manage warehouses" },
+
 
     // Product Module
     { module: "product", name: "view", description: "View products and categories" },
