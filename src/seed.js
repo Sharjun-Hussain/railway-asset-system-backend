@@ -1,42 +1,40 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-
-
-
-// --- Load Models ---
-import Permission from './models/permission.js';
-import Department from './models/departments.js';
-import Warehouse from './models/warehouse.js';
-import Role from './models/role.js';
-import User from './models/user.js';
-import Asset from './models/asset.js';
-import InventoryAdjustment from './models/inventory-adjustments.js';
-import RAGKnowledge from './models/RAGknowledge.js';
-
-// --- Load Data ---
-import { permissions } from './seeder/permissions.js';
-import { departments } from './seeder/departments.js';
-import { getWarehouses } from './seeder/warehouses.js';
-import { getRoles } from './seeder/roles.js';
-import { getUsers } from './seeder/users.js';
-import { getAssets } from './seeder/assets.js';
-import { getAdjustments } from './seeder/adjustment.js';
 import { connectDB } from './config/db.js';
 
-connectDB();
+// --- Load Models ---
+import Division from './models/division.js';
+import Station from './models/station.js';
+import Warehouse from './models/warehouse.js';
+import User from './models/user.js';
+import Category from './models/category.js';
+import SubCategory from './models/subcategory.js';
+import Product from './models/product.js';
+import Stock from './models/stock.js';
+import StockTransaction from './models/stocktransaction.js';
+
+// --- Load Seeder Data ---
+import { divisions } from './seeder/divisions.js';
+import { createStations } from './seeder/stations.js';
+import { createWarehouses } from './seeder/warehouses.js';
+import { createUsers } from './seeder/users.js';
+import { categories } from './seeder/categories.js';
+import { createSubCategories } from './seeder/subcategories.js';
+import { createProducts } from './seeder/products.js';
+
+dotenv.config();
 
 const clearData = async () => {
   try {
-    // Clear in reverse order of creation
-    // await RAGKnowledge.deleteMany();
-    await InventoryAdjustment.deleteMany();
-    await Asset.deleteMany();
-    await User.deleteMany(); // Users are cleared
-    await Role.deleteMany();
-    await Warehouse.deleteMany(); // Warehouses are cleared
-    await Department.deleteMany();
-    await Permission.deleteMany();
-
+    await StockTransaction.deleteMany();
+    await Stock.deleteMany();
+    await Product.deleteMany();
+    await SubCategory.deleteMany();
+    await Category.deleteMany();
+    await User.deleteMany();
+    await Warehouse.deleteMany();
+    await Station.deleteMany();
+    await Division.deleteMany();
     console.log('Data Cleared...');
   } catch (err) {
     console.error(err);
@@ -45,78 +43,70 @@ const clearData = async () => {
 
 const seedData = async () => {
   try {
-    // 1. Permissions
-    const createdPermissions = await Permission.insertMany(permissions);
-    console.log('Permissions seeded...');
+    // 1. Divisions
+    const createdDivisions = await Division.insertMany(divisions);
+    const divisionMap = createdDivisions.reduce((acc, d) => {
+      acc[d.division_name] = d._id;
+      return acc;
+    }, {});
+    console.log('Divisions seeded...');
 
-    // 2. Departments
-    const createdDepartments = await Department.insertMany(departments);
-    console.log('Departments seeded...');
+    // 2. Stations
+    const stations = createStations(divisionMap);
+    const createdStations = await Station.insertMany(stations);
+    const stationMap = createdStations.reduce((acc, s) => {
+      acc[s.station_name] = s._id;
+      return acc;
+    }, {});
+    console.log('Stations seeded...');
 
-    // 3. Warehouses (needs department data)
-    const warehouses = await getWarehouses();
-    const createdWarehouses = await Warehouse.insertMany(warehouses);
+    // 3. Warehouses
+    const warehouses = createWarehouses(stationMap);
+    await Warehouse.insertMany(warehouses);
     console.log('Warehouses seeded...');
 
-    // 4. Roles (needs perms, depts, warehouses)
-    const roles = await getRoles();
-    const createdRoles = await Role.insertMany(roles);
-    console.log('Roles seeded...');
+    // 4. Categories
+    const createdCategories = await Category.insertMany(categories);
+    const categoryMap = createdCategories.reduce((acc, c) => {
+      acc[c.category_name] = c._id;
+      return acc;
+    }, {});
+    console.log('Categories seeded...');
 
-    // 5. Users (needs roles)
-    const users = await getUsers();
-    const createdUsers = await User.insertMany(users);
+    // 5. SubCategories
+    const subCategories = createSubCategories(categoryMap);
+    const createdSubCategories = await SubCategory.insertMany(subCategories);
+    const subCategoryMap = createdSubCategories.reduce((acc, s) => {
+      acc[s.sub_category_name] = s._id;
+      return acc;
+    }, {});
+    console.log('SubCategories seeded...');
+
+    // 6. Products
+    const products = createProducts(categoryMap, subCategoryMap);
+    await Product.insertMany(products);
+    console.log('Products seeded...');
+
+    // 7. Users
+    const users = await createUsers(stationMap, divisionMap);
+    await User.insertMany(users);
     console.log('Users seeded...');
-
-    // 6. UPDATE Warehouse.users array (This is the tricky step from your schema)
-    const jaffnaStaff = await User.findOne({ email: "jaffna.staff@slrail.lk" });
-    const jaffnaStaffRole = await Role.findOne({ name: "Jaffna Warehouse Staff" });
-    const jaffnaWarehouse = await Warehouse.findOne({ name: "Jaffna Main Warehouse" });
-
-    if (jaffnaStaff && jaffnaWarehouse && jaffnaStaffRole) {
-      jaffnaWarehouse.users.push({
-        userId: jaffnaStaff._id,
-        role: jaffnaStaffRole.name,
-        permissions: ["adjust_inventory"] // From your schema
-      });
-      await jaffnaWarehouse.save();
-      console.log('Warehouse user assignments updated...');
-    }
-    // (Repeat for other users and warehouses as needed)
-
-    // 7. Assets (needs warehouses, depts)
-    const assets = await getAssets();
-    await Asset.insertMany(assets);
-    console.log('Assets seeded...');
-
-    // 8. Adjustments (needs assets, users)
-    const adjustments = await getAdjustments();
-    await InventoryAdjustment.insertMany(adjustments);
-    console.log('Adjustments seeded...');
-
-    // // 9. RAG Knowledge (needs assets)
-    // const ragData = await getRagData();
-    // await RAGKnowledge.insertMany(ragData);
-    // console.log('RAG Knowledge seeded...'.green);
 
     console.log('Data Seeding Complete!');
     process.exit();
-
   } catch (err) {
     console.error(err);
     process.exit(1);
   }
 };
 
-// --- Script Runner ---
 const run = async () => {
   await connectDB();
-
   if (process.argv[2] === '-d') {
     await clearData();
     process.exit();
   } else {
-    await clearData(); // Clear first
+    await clearData();
     await seedData();
   }
 };

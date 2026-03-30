@@ -1,32 +1,17 @@
-import Department from '../models/departments.js'
-
-// This file is a function because it needs database data
-export const getWarehouses = async () => {
-  // Get the departments
-  const maradana = await Department.findOne({ name: "Colombo-Maradana" });
-  const jaffna = await Department.findOne({ name: "Jaffna" });
-  const batticaloa = await Department.findOne({ name: "Batticaloa" });
-
-  return [
-    { 
-      name: "Maradana Central Store", 
-      branchId: maradana._id,
-      location: "Warehouse A, Maradana Yard"
-    },
-    { 
-      name: "Maradana Signal Parts", 
-      branchId: maradana._id,
-      location: "Warehouse B, Signal Division"
-    },
-    { 
-      name: "Jaffna Main Warehouse", 
-      branchId: jaffna._id,
-      location: "Jaffna Station Yard"
-    },
-    { 
-      name: "Batticaloa Rolling Stock", 
-      branchId: batticaloa._id,
-      location: "Batticaloa Yard"
-    }
-  ];
-};
+export const createWarehouses = (stationMap) => [
+  {
+    warehouse_name: "Fort Mechanical Store",
+    warehouse_type: "Mechanical",
+    stationId: stationMap["Colombo Fort"]
+  },
+  {
+    warehouse_name: "Maradana Signal Store",
+    warehouse_type: "Signal",
+    stationId: stationMap["Maradana"]
+  },
+  {
+    warehouse_name: "Jaffna General Store",
+    warehouse_type: "General",
+    stationId: stationMap["Jaffna"]
+  }
+];
