@@ -6,7 +6,7 @@ import {
     getStations, createStation, updateStation, deleteStation
 } from '../controllers/stationController.js';
 import {
-    getWarehouses, createWarehouse
+    getWarehouses, createWarehouse, updateWarehouse, deleteWarehouse
 } from '../controllers/locationController.js';
 import {
     getCategories, createCategory,
@@ -57,6 +57,10 @@ router.route('/stations/:id')
 router.route('/warehouses')
     .get(protect, hasPermission('warehouse', 'view'), getWarehouses)
     .post(protect, hasPermission('warehouse', 'manage'), createWarehouse);
+
+router.route('/warehouses/:id')
+    .put(protect, hasPermission('warehouse', 'manage'), updateWarehouse)
+    .delete(protect, hasPermission('warehouse', 'manage'), deleteWarehouse);
 
 
 // --- Asset Routes ---
