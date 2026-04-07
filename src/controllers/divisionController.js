@@ -30,7 +30,7 @@ export const getDivisions = async (req, res) => {
  */
 export const createDivision = async (req, res) => {
     try {
-        const { division_name, region } = req.body;
+        const { division_name, region, is_active } = req.body;
 
         const existingDivision = await Division.findOne({ division_name });
         if (existingDivision) {
@@ -40,7 +40,11 @@ export const createDivision = async (req, res) => {
             });
         }
 
-        const division = await Division.create({ division_name, region });
+        const division = await Division.create({ 
+            division_name, 
+            region, 
+            is_active: is_active !== undefined ? is_active : true 
+        });
         res.status(201).json({
             success: true,
             data: division
@@ -62,7 +66,7 @@ export const createDivision = async (req, res) => {
 export const updateDivision = async (req, res) => {
     try {
         const { id } = req.params;
-        const { division_name, region } = req.body;
+        const { division_name, region, is_active } = req.body;
 
         let division = await Division.findById(id);
         if (!division) {
@@ -85,7 +89,7 @@ export const updateDivision = async (req, res) => {
 
         division = await Division.findByIdAndUpdate(
             id,
-            { division_name, region, updatedAt: Date.now() },
+            { division_name, region, is_active, updatedAt: Date.now() },
             { new: true, runValidators: true }
         );
 
