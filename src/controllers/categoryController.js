@@ -1,6 +1,7 @@
+import asset from '../models/asset.js';
 import Category from '../models/category.js';
 import SubCategory from '../models/subcategory.js';
-import Product from '../models/product.js';
+
 
 // Get all categories
 export const getCategories = async (req, res) => {
@@ -26,8 +27,8 @@ export const createCategory = async (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         const category = await Category.findByIdAndUpdate(
-            req.params.id, 
-            { ...req.body, updatedAt: Date.now() }, 
+            req.params.id,
+            { ...req.body, updatedAt: Date.now() },
             { new: true }
         );
         if (!category) return res.status(404).json({ message: "Category not found" });
@@ -43,22 +44,22 @@ export const deleteCategory = async (req, res) => {
         // Check if there are any sub-categories using this category
         const subCategoryCount = await SubCategory.countDocuments({ categoryId: req.params.id });
         if (subCategoryCount > 0) {
-            return res.status(400).json({ 
-                message: "Cannot delete category: It has active sub-categories. Delete or move them first." 
+            return res.status(400).json({
+                message: "Cannot delete category: It has active sub-categories. Delete or move them first."
             });
         }
 
         // Check if there are any products using this category
-        const productCount = await Product.countDocuments({ categoryId: req.params.id });
+        const productCount = await asset.countDocuments({ categoryId: req.params.id });
         if (productCount > 0) {
-            return res.status(400).json({ 
-                message: "Cannot delete category: It is currently linked to active products." 
+            return res.status(400).json({
+                message: "Cannot delete category: It is currently linked to active products."
             });
         }
 
         const category = await Category.findByIdAndDelete(req.params.id);
         if (!category) return res.status(404).json({ message: "Category not found" });
-        
+
         res.json({ message: "Category deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -11,7 +11,7 @@ import {
 import { getCategories, createCategory, updateCategory, deleteCategory } from "../controllers/categoryController.js";
 import { getSubCategories, createSubCategory, updateSubCategory, deleteSubCategory } from "../controllers/subCategoryController.js";
 import { getAssets, createAsset, updateAsset, deleteAsset } from "../controllers/assetController.js";
-import { getStock, handleTransaction, getAssetStock } from "../controllers/inventoryController.js";
+import { getStock, handleTransaction, getAssetStock, getTransactions } from "../controllers/inventoryController.js";
 import {
     getPermissions, createPermission,
     getRoles, createRole, updateRole, deleteRole

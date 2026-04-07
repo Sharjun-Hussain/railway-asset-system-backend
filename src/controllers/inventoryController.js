@@ -1,3 +1,7 @@
+import Stock from "../models/stock.js";
+import Transaction from "../models/transaction.js";
+import Asset from "../models/asset.js";
+
 // @desc    Get all stock levels
 // @route   GET /api/v1/inventory
 export const getStock = async (req, res) => {
@@ -68,6 +72,22 @@ export const handleTransaction = async (req, res) => {
             message: "Transaction processed successfully",
             transaction 
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get transaction history
+// @route   GET /api/v1/transactions
+export const getTransactions = async (req, res) => {
+    try {
+        const transactions = await Transaction.find()
+            .populate("assetId", "asset_name qr_code")
+            .populate("warehouseId", "warehouse_name")
+            .populate("toWarehouseId", "warehouse_name")
+            .populate("performedBy", "name")
+            .sort({ createdAt: -1 });
+        res.json(transactions);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
