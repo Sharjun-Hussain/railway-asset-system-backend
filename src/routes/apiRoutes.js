@@ -1,7 +1,11 @@
 import express from 'express';
 import {
-    getDivisions, createDivision,
-    getStations, createStation,
+    getDivisions, createDivision, updateDivision, deleteDivision
+} from '../controllers/divisionController.js';
+import {
+    getStations, createStation, updateStation, deleteStation
+} from '../controllers/stationController.js';
+import {
     getWarehouses, createWarehouse
 } from '../controllers/locationController.js';
 import {
@@ -38,9 +42,17 @@ router.route('/divisions')
     .get(protect, hasPermission('division', 'view'), getDivisions)
     .post(protect, hasPermission('division', 'manage'), createDivision);
 
+router.route('/divisions/:id')
+    .put(protect, hasPermission('division', 'manage'), updateDivision)
+    .delete(protect, hasPermission('division', 'manage'), deleteDivision);
+
 router.route('/stations')
     .get(protect, hasPermission('station', 'view'), getStations)
     .post(protect, hasPermission('station', 'manage'), createStation);
+
+router.route('/stations/:id')
+    .put(protect, hasPermission('station', 'manage'), updateStation)
+    .delete(protect, hasPermission('station', 'manage'), deleteStation);
 
 router.route('/warehouses')
     .get(protect, hasPermission('warehouse', 'view'), getWarehouses)
