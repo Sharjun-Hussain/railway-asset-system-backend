@@ -37,7 +37,7 @@ export const getStations = async (req, res) => {
  */
 export const createStation = async (req, res) => {
     try {
-        const { station_name, station_code, address, divisionId } = req.body;
+        const { station_name, station_code, address, divisionId, is_active } = req.body;
 
         const existingStation = await Station.findOne({ station_code });
         if (existingStation) {
@@ -51,7 +51,8 @@ export const createStation = async (req, res) => {
             station_name, 
             station_code, 
             address, 
-            divisionId 
+            divisionId,
+            is_active: is_active !== undefined ? is_active : true
         });
 
         res.status(201).json({
@@ -75,7 +76,7 @@ export const createStation = async (req, res) => {
 export const updateStation = async (req, res) => {
     try {
         const { id } = req.params;
-        const { station_name, station_code, address, divisionId } = req.body;
+        const { station_name, station_code, address, divisionId, is_active } = req.body;
 
         let station = await Station.findById(id);
         if (!station) {
@@ -98,7 +99,7 @@ export const updateStation = async (req, res) => {
 
         station = await Station.findByIdAndUpdate(
             id,
-            { station_name, station_code, address, divisionId, updatedAt: Date.now() },
+            { station_name, station_code, address, divisionId, is_active, updatedAt: Date.now() },
             { new: true, runValidators: true }
         );
 

@@ -37,13 +37,14 @@ export const getWarehouses = async (req, res) => {
 
 export const createWarehouse = async (req, res) => {
     try {
-        const { warehouse_name, warehouse_type, stationId, description } = req.body;
+        const { warehouse_name, warehouse_type, stationId, description, is_active } = req.body;
 
         const warehouse = await Warehouse.create({
             warehouse_name,
             warehouse_type,
             stationId,
-            description
+            description,
+            is_active: is_active !== undefined ? is_active : true
         });
 
         res.status(201).json({
@@ -62,7 +63,7 @@ export const createWarehouse = async (req, res) => {
 export const updateWarehouse = async (req, res) => {
     try {
         const { id } = req.params;
-        const { warehouse_name, warehouse_type, stationId, description } = req.body;
+        const { warehouse_name, warehouse_type, stationId, description, is_active } = req.body;
 
         let warehouse = await Warehouse.findById(id);
         if (!warehouse) {
@@ -74,7 +75,7 @@ export const updateWarehouse = async (req, res) => {
 
         warehouse = await Warehouse.findByIdAndUpdate(
             id,
-            { warehouse_name, warehouse_type, stationId, description, updatedAt: Date.now() },
+            { warehouse_name, warehouse_type, stationId, description, is_active, updatedAt: Date.now() },
             { new: true, runValidators: true }
         );
 
