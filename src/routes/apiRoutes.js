@@ -8,18 +8,10 @@ import {
 import {
     getWarehouses, createWarehouse, updateWarehouse, deleteWarehouse
 } from '../controllers/locationController.js';
-import {
-    getCategories, createCategory, updateCategory, deleteCategory
-} from '../controllers/categoryController.js';
-import {
-    getSubCategories, createSubCategory, updateSubCategory, deleteSubCategory
-} from '../controllers/subCategoryController.js';
-import {
-    getProducts, createProduct, updateProduct, deleteProduct
-} from '../controllers/productController.js';
-import {
-    getStock, handleTransaction, getTransactions
-} from '../controllers/inventoryController.js';
+import { getCategories, createCategory, updateCategory, deleteCategory } from "../controllers/categoryController.js";
+import { getSubCategories, createSubCategory, updateSubCategory, deleteSubCategory } from "../controllers/subCategoryController.js";
+import { getAssets, createAsset, updateAsset, deleteAsset } from "../controllers/assetController.js";
+import { getStock, handleTransaction, getAssetStock } from "../controllers/inventoryController.js";
 import {
     getPermissions, createPermission,
     getRoles, createRole, updateRole, deleteRole
@@ -84,17 +76,19 @@ router.route('/subcategories/:id')
     .put(protect, hasPermission('product', 'manage'), updateSubCategory)
     .delete(protect, hasPermission('product', 'manage'), deleteSubCategory);
 
-router.route('/products')
-    .get(protect, hasPermission('product', 'view'), getProducts)
-    .post(protect, hasPermission('product', 'manage'), createProduct);
+// Asset Catalog Routes
+router.route("/assets")
+    .get(protect, getAssets)
+    .post(protect, hasPermission("create_product"), createAsset);
 
-router.route('/products/:id')
-    .put(protect, hasPermission('product', 'manage'), updateProduct)
-    .delete(protect, hasPermission('product', 'manage'), deleteProduct);
+router.route("/assets/:id")
+    .put(protect, hasPermission("edit_product"), updateAsset)
+    .delete(protect, hasPermission("delete_product"), deleteAsset);
 
-// --- Inventory Routes ---
-router.route('/stock')
-    .get(protect, hasPermission('stock', 'view'), getStock);
+// Inventory / Stock Routes
+router.get("/inventory", protect, getStock);
+router.post("/inventory/transaction", protect, handleTransaction);
+router.get("/inventory/asset/:id", protect, getAssetStock);
 
 router.route('/transactions')
     .get(protect, hasPermission('stock', 'view'), getTransactions)

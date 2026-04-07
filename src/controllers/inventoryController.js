@@ -1,87 +1,85 @@
-import Stock from '../models/stock.js';
-import StockTransaction from '../models/stocktransaction.js';
-import mongoose from 'mongoose';
-
+// @desc    Get all stock levels
+// @route   GET /api/v1/inventory
 export const getStock = async (req, res) => {
     try {
-        const filter = {};
-        if (req.query.warehouseId) filter.warehouseId = req.query.warehouseId;
-        if (req.query.productId) filter.productId = req.query.productId;
-
-        const stock = await Stock.find(filter)
-            .populate('warehouseId')
-            .populate('productId');
-        res.json(stock);
+        const stocks = await Stock.find()
+            .populate("assetId", "asset_name qr_code unit")
+            .populate("warehouseId", "warehouse_name location")
+            .sort({ updatedAt: -1 });
+        
+        res.json(stocks);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
+// @desc    Update stock via transaction (Receive, Issue, Transfer)
+// @route   POST /api/v1/inventory/transaction
 export const handleTransaction = async (req, res) => {
-    const { warehouseId, productId, type, quantity, reason, transaction_id } = req.body;
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const { type, assetId, warehouseId, toWarehouseId, quantity, referenceNo, remarks } = req.body;
 
     try {
-        // 1. Create Transaction Log
-        const transaction = await StockTransaction.create([{
-            transaction_id,
-            warehouseId,
-            productId,
-            userId: req.user._id,
+        // 1. Log the transaction
+        const transaction = await Transaction.create({
             type,
+            assetId,
+            warehouseId,
+            toWarehouseId,
             quantity,
-            reason
-        }], { session });
+            referenceNo,
+            remarks,
+            performedBy: req.user?._id
+        });
 
-        // 2. Update Stock
-        let stock = await Stock.findOne({ warehouseId, productId }).session(session);
-
-        if (!stock) {
-            if (type === 'Issue' || type === 'Transfer') {
-                throw new Error('Insufficient stock: Record not found');
+        // 2. Update Stock Levels
+        if (type === "RECEIVE") {
+            await Stock.findOneAndUpdate(
+                { assetId, warehouseId },
+                { $inc: { quantity: quantity }, updatedAt: Date.now() },
+                { upsert: true, new: true }
+            );
+        } else if (type === "ISSUE") {
+            const stock = await Stock.findOne({ assetId, warehouseId });
+            if (!stock || stock.quantity < quantity) {
+                return res.status(400).json({ message: "Insufficient stock level for issue" });
             }
-            stock = new Stock({ warehouseId, productId, quantity: 0 });
+            stock.quantity -= quantity;
+            stock.updatedAt = Date.now();
+            await stock.save();
+        } else if (type === "TRANSFER") {
+            // Subtract from source
+            const sourceStock = await Stock.findOne({ assetId, warehouseId });
+            if (!sourceStock || sourceStock.quantity < quantity) {
+                return res.status(400).json({ message: "Insufficient stock at source warehouse" });
+            }
+            sourceStock.quantity -= quantity;
+            sourceStock.updatedAt = Date.now();
+            await sourceStock.save();
+
+            // Add to destination
+            await Stock.findOneAndUpdate(
+                { assetId, warehouseId: toWarehouseId },
+                { $inc: { quantity: quantity }, updatedAt: Date.now() },
+                { upsert: true, new: true }
+            );
         }
 
-        if (type === 'Receive') {
-            stock.quantity += Number(quantity);
-        } else if (type === 'Issue' || type === 'Transfer') {
-            if (stock.quantity < quantity) {
-                throw new Error('Insufficient stock');
-            }
-            stock.quantity -= Number(quantity);
-        } else if (type === 'Adjustment') {
-            stock.quantity = Number(quantity); // For adjustments, we might set absolute value or delta
-        }
-
-        await stock.save({ session });
-
-        await session.commitTransaction();
-        res.status(201).json(transaction[0]);
+        res.status(201).json({ 
+            message: "Transaction processed successfully",
+            transaction 
+        });
     } catch (error) {
-        await session.abortTransaction();
-        res.status(400).json({ message: error.message });
-    } finally {
-        session.endSession();
+        res.status(500).json({ message: error.message });
     }
 };
 
-export const getTransactions = async (req, res) => {
+// @desc    Get stock for a specific asset
+// @route   GET /api/v1/inventory/asset/:id
+export const getAssetStock = async (req, res) => {
     try {
-        const filter = {};
-        if (req.query.warehouseId) filter.warehouseId = req.query.warehouseId;
-        if (req.user.role === 'Warehouse Manager' && req.user.warehouseId) {
-            // Note: Warehouse Manager needs a warehouseId on User model or a different check
-            // For now, assume global or filtered by query
-        }
-
-        const transactions = await StockTransaction.find(filter)
-            .populate('warehouseId')
-            .populate('productId')
-            .populate('userId', 'full_name email')
-            .sort({ createdAt: -1 });
-        res.json(transactions);
+        const stocks = await Stock.find({ assetId: req.params.id })
+            .populate("warehouseId", "warehouse_name location");
+        res.json(stocks);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
