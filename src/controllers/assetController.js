@@ -30,7 +30,13 @@ export const createAsset = async (req, res) => {
             subCategoryId,
             description
         });
-        res.status(201).json(asset);
+
+        // Populate and return
+        const populatedAsset = await Asset.findById(asset._id)
+            .populate("categoryId", "category_name")
+            .populate("subCategoryId", "sub_category_name");
+
+        res.status(201).json(populatedAsset);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -49,7 +55,9 @@ export const updateAsset = async (req, res) => {
             req.params.id,
             { ...req.body, updatedAt: Date.now() },
             { new: true }
-        );
+        ).populate("categoryId", "category_name")
+         .populate("subCategoryId", "sub_category_name");
+
         res.json(updatedAsset);
     } catch (error) {
         res.status(400).json({ message: error.message });
