@@ -9,10 +9,14 @@ import {
     getWarehouses, createWarehouse, updateWarehouse, deleteWarehouse
 } from '../controllers/locationController.js';
 import {
-    getCategories, createCategory,
-    getSubCategories, createSubCategory,
-    getProducts, createProduct
-} from '../controllers/assetController.js';
+    getCategories, createCategory, updateCategory, deleteCategory
+} from '../controllers/categoryController.js';
+import {
+    getSubCategories, createSubCategory, updateSubCategory, deleteSubCategory
+} from '../controllers/subCategoryController.js';
+import {
+    getProducts, createProduct, updateProduct, deleteProduct
+} from '../controllers/productController.js';
 import {
     getStock, handleTransaction, getTransactions
 } from '../controllers/inventoryController.js';
@@ -68,13 +72,25 @@ router.route('/categories')
     .get(protect, hasPermission('product', 'view'), getCategories)
     .post(protect, hasPermission('product', 'manage'), createCategory);
 
+router.route('/categories/:id')
+    .put(protect, hasPermission('product', 'manage'), updateCategory)
+    .delete(protect, hasPermission('product', 'manage'), deleteCategory);
+
 router.route('/subcategories')
     .get(protect, hasPermission('product', 'view'), getSubCategories)
     .post(protect, hasPermission('product', 'manage'), createSubCategory);
 
+router.route('/subcategories/:id')
+    .put(protect, hasPermission('product', 'manage'), updateSubCategory)
+    .delete(protect, hasPermission('product', 'manage'), deleteSubCategory);
+
 router.route('/products')
     .get(protect, hasPermission('product', 'view'), getProducts)
     .post(protect, hasPermission('product', 'manage'), createProduct);
+
+router.route('/products/:id')
+    .put(protect, hasPermission('product', 'manage'), updateProduct)
+    .delete(protect, hasPermission('product', 'manage'), deleteProduct);
 
 // --- Inventory Routes ---
 router.route('/stock')
@@ -85,4 +101,3 @@ router.route('/transactions')
     .post(protect, hasPermission('stock', 'receive'), handleTransaction);
 
 export default router;
-
