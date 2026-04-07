@@ -40,10 +40,10 @@ export const createDivision = async (req, res) => {
             });
         }
 
-        const division = await Division.create({ 
-            division_name, 
-            region, 
-            is_active: is_active !== undefined ? is_active : true 
+        const division = await Division.create({
+            division_name,
+            region,
+            is_active: is_active !== undefined ? is_active : true
         });
         res.status(201).json({
             success: true,
