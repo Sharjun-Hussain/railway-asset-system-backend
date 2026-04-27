@@ -70,6 +70,13 @@ export const handleTransaction = async (req, res) => {
                 { $inc: { quantity: quantity }, updatedAt: Date.now() },
                 { upsert: true, new: true }
             );
+        } else if (type === "ADJUST") {
+            // For adjustments, we allow both positive and negative quantity changes
+            await Stock.findOneAndUpdate(
+                { assetId, warehouseId },
+                { $inc: { quantity: quantity }, updatedAt: Date.now() },
+                { upsert: true, new: true }
+            );
         }
 
         res.status(201).json({ 
