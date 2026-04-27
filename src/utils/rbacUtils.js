@@ -5,10 +5,14 @@ import Station from '../models/station.js';
  * Returns an array of Warehouse IDs that the user is authorized to access.
  * Returns null if the user is a Super Admin (full access).
  */
+const hasBypassPermission = (user) => {
+    const permissions = user.roles?.flatMap(r => r.permissions) || [];
+    return permissions.some(p => p.module === 'system' && p.name === 'bypass_scope') || 
+           user.roles?.some(r => r.name === 'Super Admin');
+};
+
 export const getAllowedWarehouseIds = async (user) => {
-    const roles = user.roles || [];
-    const isGlobal = roles.some(r => r.name === 'Super Admin' || r.name === 'Auditor');
-    if (isGlobal) return null;
+    if (hasBypassPermission(user)) return null;
 
     // 1. Warehouse Manager / Staff: Limited to specific warehouses
     if (user.warehouseIds && user.warehouseIds.length > 0) {
@@ -37,9 +41,7 @@ export const getAllowedWarehouseIds = async (user) => {
  * Returns an array of Station IDs that the user is authorized to access.
  */
 export const getAllowedStationIds = async (user) => {
-    const roles = user.roles || [];
-    const isGlobal = roles.some(r => r.name === 'Super Admin' || r.name === 'Auditor');
-    if (isGlobal) return null;
+    if (hasBypassPermission(user)) return null;
 
     if (user.stationId) return [user.stationId];
 
@@ -55,9 +57,7 @@ export const getAllowedStationIds = async (user) => {
  * Returns an array of Division IDs that the user is authorized to access.
  */
 export const getAllowedDivisionIds = async (user) => {
-    const roles = user.roles || [];
-    const isGlobal = roles.some(r => r.name === 'Super Admin' || r.name === 'Auditor');
-    if (isGlobal) return null;
+    if (hasBypassPermission(user)) return null;
 
     if (user.divisionId) return [user.divisionId];
 
