@@ -5,7 +5,7 @@ export const createRoles = (permMap) => [
         permissions: Object.values(permMap) // All permissions
     },
     {
-        name: "Division Manager",
+        name: "Division Manager", 
         description: "Regional oversight",
         permissions: [
             permMap["division.view"], permMap["division.manage"],

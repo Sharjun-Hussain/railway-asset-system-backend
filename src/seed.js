@@ -104,6 +104,7 @@ const seedData = async () => {
     const productData = createProducts(categoryMap, subCategoryMap);
     await Product.insertMany(productData);
     console.log('Products seeded...');
+    
     const userData = await createUsers(roleMap, stationMap, divisionMap, warehouseMap);
     await User.insertMany(userData);
     console.log('Users seeded...');

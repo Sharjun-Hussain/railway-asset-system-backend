@@ -79,11 +79,11 @@ router.route('/subcategories/:id')
 // Asset Catalog Routes
 router.route("/assets")
     .get(protect, getAssets)
-    .post(protect, hasPermission("create_product"), createAsset);
+    .post(protect, hasPermission('product', 'manage'), createAsset);
 
 router.route("/assets/:id")
-    .put(protect, hasPermission("edit_product"), updateAsset)
-    .delete(protect, hasPermission("delete_product"), deleteAsset);
+    .put(protect, hasPermission('product', 'manage'), updateAsset)
+    .delete(protect, hasPermission('product', 'manage'), deleteAsset);
 
 // Inventory / Stock Routes
 router.get("/inventory", protect, getStock);
