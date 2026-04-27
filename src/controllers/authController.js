@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import sendEmail from '../utils/sendEmail.js';
+import { logActivity } from './auditController.js';
 
 // --- Helper Functions ---
 const generateAccessToken = (id) => {
@@ -232,6 +233,13 @@ export const updateUser = async (req, res) => {
     user.isActive = isActive !== undefined ? isActive : user.isActive;
 
     await user.save();
+    
+    // Log Activity
+    await logActivity(req, 'USER', 'UPDATE', { 
+      targetUser: user.email,
+      updates: Object.keys(req.body)
+    }, user._id);
+
     res.json({ message: 'User updated successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -293,6 +301,12 @@ export const inviteUser = async (req, res) => {
         message: `Welcome to SLR. Accept your invitation here: ${inviteUrl}`,
         html,
       });
+
+      // Log Activity
+      await logActivity(req, 'USER', 'INVITE', { 
+        invitedEmail: email,
+        assignedRoles: roleIds 
+      }, user._id);
 
       res.status(201).json({
         success: true,
