@@ -61,8 +61,7 @@ export const createRoles = (permMap) => [
             permMap["station.view"],
             permMap["warehouse.view"],
             permMap["rbac.view"],
-            permMap["user.view"],
-            permMap["system.bypass_scope"]
+            permMap["user.view"]
         ]
     }
 ];

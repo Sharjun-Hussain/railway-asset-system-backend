@@ -2,7 +2,6 @@ export const permissions = [
     // RBAC Module
     { module: "rbac", name: "view", description: "View roles and permissions" },
     { module: "rbac", name: "manage", description: "Full control over roles and permissions" },
-    { module: "system", name: "bypass_scope", description: "Bypass all organizational scoping (Global View)" },
 
     // User Management
     { module: "user", name: "view", description: "View system users" },
