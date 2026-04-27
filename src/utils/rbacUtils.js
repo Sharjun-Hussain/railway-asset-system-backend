@@ -7,8 +7,8 @@ import Station from '../models/station.js';
  */
 export const getAllowedWarehouseIds = async (user) => {
     const roles = user.roles || [];
-    const isSuperAdmin = roles.some(role => role.name === 'Super Admin');
-    if (isSuperAdmin) return null;
+    const isGlobal = roles.some(r => r.name === 'Super Admin' || r.name === 'Auditor');
+    if (isGlobal) return null;
 
     // 1. Warehouse Manager / Staff: Limited to specific warehouses
     if (user.warehouseIds && user.warehouseIds.length > 0) {
@@ -38,8 +38,8 @@ export const getAllowedWarehouseIds = async (user) => {
  */
 export const getAllowedStationIds = async (user) => {
     const roles = user.roles || [];
-    const isSuperAdmin = roles.some(role => role.name === 'Super Admin');
-    if (isSuperAdmin) return null;
+    const isGlobal = roles.some(r => r.name === 'Super Admin' || r.name === 'Auditor');
+    if (isGlobal) return null;
 
     if (user.stationId) return [user.stationId];
 
@@ -56,8 +56,8 @@ export const getAllowedStationIds = async (user) => {
  */
 export const getAllowedDivisionIds = async (user) => {
     const roles = user.roles || [];
-    const isSuperAdmin = roles.some(role => role.name === 'Super Admin');
-    if (isSuperAdmin) return null;
+    const isGlobal = roles.some(r => r.name === 'Super Admin' || r.name === 'Auditor');
+    if (isGlobal) return null;
 
     if (user.divisionId) return [user.divisionId];
 

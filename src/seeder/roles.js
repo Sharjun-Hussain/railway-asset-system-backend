@@ -49,5 +49,19 @@ export const createRoles = (permMap) => [
             permMap["stock.view"],
             permMap["stock.receive"]
         ]
+    },
+    {
+        name: "Auditor",
+        description: "System-wide view access for auditing",
+        permissions: [
+            permMap["product.view"],
+            permMap["stock.view"],
+            permMap["report.view"],
+            permMap["division.view"],
+            permMap["station.view"],
+            permMap["warehouse.view"],
+            permMap["rbac.view"],
+            permMap["user.view"]
+        ]
     }
 ];
