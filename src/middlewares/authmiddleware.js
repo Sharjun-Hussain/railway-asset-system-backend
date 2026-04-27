@@ -71,22 +71,25 @@ export const checkScope = (scopeType) => {
     const isSuperAdmin = roles.some(role => role.name === 'Super Admin');
     if (isSuperAdmin) return next();
 
+    // Check station scope
     if (scopeType === 'station') {
-      const stationId = req.params.stationId || req.body.stationId || req.query.stationId;
+      const stationId = req.params.stationId || req.body.stationId || req.query.stationId || (req.params.id && req.baseUrl.includes('stations') ? req.params.id : null);
       if (stationId && req.user.stationId && stationId.toString() !== req.user.stationId.toString()) {
         return res.status(403).json({ message: 'Forbidden: You do not have access to this station.' });
       }
     }
 
+    // Check division scope
     if (scopeType === 'division') {
-      const divisionId = req.params.divisionId || req.body.divisionId || req.query.divisionId;
+      const divisionId = req.params.divisionId || req.body.divisionId || req.query.divisionId || (req.params.id && req.baseUrl.includes('divisions') ? req.params.id : null);
       if (divisionId && req.user.divisionId && divisionId.toString() !== req.user.divisionId.toString()) {
         return res.status(403).json({ message: 'Forbidden: You do not have access to this division.' });
       }
     }
 
+    // Check warehouse scope
     if (scopeType === 'warehouse') {
-      const warehouseId = req.params.warehouseId || req.body.warehouseId || req.query.warehouseId;
+      const warehouseId = req.params.warehouseId || req.body.warehouseId || req.query.warehouseId || (req.params.id && req.baseUrl.includes('warehouses') ? req.params.id : null);
       if (warehouseId && req.user.warehouseIds && req.user.warehouseIds.length > 0) {
         const hasAccess = req.user.warehouseIds.some(wid => wid.toString() === warehouseId.toString());
         if (!hasAccess) {

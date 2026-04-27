@@ -1,12 +1,16 @@
 import Stock from "../models/stock.js";
 import Transaction from "../models/transaction.js";
 import Asset from "../models/asset.js";
+import { getAllowedWarehouseIds } from "../utils/rbacUtils.js";
 
 // @desc    Get all stock levels
 // @route   GET /api/v1/inventory
 export const getStock = async (req, res) => {
     try {
-        const stocks = await Stock.find()
+        const warehouseIds = await getAllowedWarehouseIds(req.user);
+        const query = warehouseIds ? { warehouseId: { $in: warehouseIds } } : {};
+
+        const stocks = await Stock.find(query)
             .populate("assetId", "asset_name qr_code unit")
             .populate("warehouseId", "warehouse_name location")
             .sort({ updatedAt: -1 });
@@ -81,11 +85,19 @@ export const handleTransaction = async (req, res) => {
 // @route   GET /api/v1/transactions
 export const getTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.find()
+        const warehouseIds = await getAllowedWarehouseIds(req.user);
+        const query = warehouseIds ? {
+            $or: [
+                { warehouseId: { $in: warehouseIds } },
+                { toWarehouseId: { $in: warehouseIds } }
+            ]
+        } : {};
+
+        const transactions = await Transaction.find(query)
             .populate("assetId", "asset_name qr_code")
             .populate("warehouseId", "warehouse_name")
             .populate("toWarehouseId", "warehouse_name")
-            .populate("performedBy", "name")
+            .populate("performedBy", "full_name")
             .sort({ createdAt: -1 });
         res.json(transactions);
     } catch (error) {
@@ -97,7 +109,13 @@ export const getTransactions = async (req, res) => {
 // @route   GET /api/v1/inventory/asset/:id
 export const getAssetStock = async (req, res) => {
     try {
-        const stocks = await Stock.find({ assetId: req.params.id })
+        const warehouseIds = await getAllowedWarehouseIds(req.user);
+        const query = { assetId: req.params.id };
+        if (warehouseIds) {
+            query.warehouseId = { $in: warehouseIds };
+        }
+
+        const stocks = await Stock.find(query)
             .populate("warehouseId", "warehouse_name location");
         res.json(stocks);
     } catch (error) {

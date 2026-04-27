@@ -78,7 +78,7 @@ router.route('/subcategories/:id')
 
 // Asset Catalog Routes
 router.route("/assets")
-    .get(protect, getAssets)
+    .get(protect, hasPermission('product', 'view'), getAssets)
     .post(protect, hasPermission('product', 'manage'), createAsset);
 
 router.route("/assets/:id")
@@ -86,12 +86,11 @@ router.route("/assets/:id")
     .delete(protect, hasPermission('product', 'manage'), deleteAsset);
 
 // Inventory / Stock Routes
-router.get("/inventory", protect, getStock);
-router.post("/inventory/transaction", protect, handleTransaction);
-router.get("/inventory/asset/:id", protect, getAssetStock);
+router.get("/inventory", protect, hasPermission('stock', 'view'), getStock);
+router.get("/inventory/asset/:id", protect, hasPermission('stock', 'view'), getAssetStock);
 
 router.route('/transactions')
     .get(protect, hasPermission('stock', 'view'), getTransactions)
-    .post(protect, hasPermission('stock', 'receive'), handleTransaction);
+    .post(protect, hasPermission('stock', 'receive'), checkScope('warehouse'), handleTransaction);
 
 export default router;

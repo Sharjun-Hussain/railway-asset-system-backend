@@ -2,16 +2,17 @@ import Station from '../models/station.js';
 import Warehouse from '../models/warehouse.js';
 import Stock from '../models/stock.js';
 import User from '../models/user.js';
+import { getAllowedWarehouseIds } from '../utils/rbacUtils.js';
 
 // --- Warehouses ---
 export const getWarehouses = async (req, res) => {
     try {
+        const allowedWarehouseIds = await getAllowedWarehouseIds(req.user);
         const filter = {};
         if (req.query.stationId) filter.stationId = req.query.stationId;
 
-        // RBAC: If user is Station Master, they can only see their station's warehouses
-        if (req.user && req.user.role === 'Station Master' && req.user.stationId) {
-            filter.stationId = req.user.stationId;
+        if (allowedWarehouseIds) {
+            filter._id = { $in: allowedWarehouseIds };
         }
 
         const warehouses = await Warehouse.find(filter)

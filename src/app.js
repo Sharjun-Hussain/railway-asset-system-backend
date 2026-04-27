@@ -25,5 +25,6 @@ app.use("/test", (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', apiRoutes);
 
+
 export default app;
 

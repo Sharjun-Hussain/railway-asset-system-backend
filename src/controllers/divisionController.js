@@ -1,5 +1,6 @@
 import Division from "../models/division.js";
 import Station from "../models/station.js";
+import { getAllowedDivisionIds } from "../utils/rbacUtils.js";
 
 /**
  * @desc    Get all divisions
@@ -8,7 +9,9 @@ import Station from "../models/station.js";
  */
 export const getDivisions = async (req, res) => {
     try {
-        const divisions = await Division.find().sort({ division_name: 1 });
+        const divisionIds = await getAllowedDivisionIds(req.user);
+        const query = divisionIds ? { _id: { $in: divisionIds } } : {};
+        const divisions = await Division.find(query).sort({ division_name: 1 });
         res.status(200).json({
             success: true,
             count: divisions.length,

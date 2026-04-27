@@ -1,6 +1,7 @@
 import Station from "../models/station.js";
 import Warehouse from "../models/warehouse.js";
 import User from "../models/user.js";
+import { getAllowedStationIds } from "../utils/rbacUtils.js";
 
 /**
  * @desc    Get all stations
@@ -9,8 +10,13 @@ import User from "../models/user.js";
  */
 export const getStations = async (req, res) => {
     try {
+        const allowedStationIds = await getAllowedStationIds(req.user);
         const filter = {};
         if (req.query.divisionId) filter.divisionId = req.query.divisionId;
+        
+        if (allowedStationIds) {
+            filter._id = { $in: allowedStationIds };
+        }
 
         const stations = await Station.find(filter)
             .populate('divisionId', 'division_name region')

@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 const stockSchema = new mongoose.Schema({
     warehouseId: { type: mongoose.Schema.Types.ObjectId, ref: "Warehouse", required: true },
-    warehouseId: { type: mongoose.Schema.Types.ObjectId, ref: "Warehouse", required: true },
     assetId: { type: mongoose.Schema.Types.ObjectId, ref: "Asset", required: true },
     quantity: { type: Number, default: 0 },
     min_level: { type: Number, default: 0 },
