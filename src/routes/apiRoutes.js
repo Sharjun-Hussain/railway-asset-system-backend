@@ -16,7 +16,7 @@ import {
     getPermissions, createPermission,
     getRoles, createRole, updateRole, deleteRole
 } from '../controllers/roleController.js';
-import { getUsers, updateUser } from '../controllers/authController.js';
+import { getUsers, updateUser, inviteUser } from '../controllers/authController.js';
 import { protect, hasPermission, checkScope } from '../middlewares/authmiddleware.js';
 
 const router = express.Router();
@@ -36,7 +36,8 @@ router.route('/roles/:id')
 
 // --- User Management ---
 router.route('/users')
-    .get(protect, hasPermission('user', 'view'), getUsers);
+    .get(protect, hasPermission('user', 'view'), getUsers)
+    .post(protect, hasPermission('user', 'manage'), inviteUser);
 
 router.route('/users/:id')
     .put(protect, hasPermission('user', 'manage'), updateUser);

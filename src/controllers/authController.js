@@ -237,3 +237,100 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const inviteUser = async (req, res) => {
+  const { full_name, email, roleIds, stationId, divisionId, warehouseIds } = req.body;
+
+  try {
+    const userExists = await User.findOne({ email });
+    if (userExists) return res.status(400).json({ message: 'Email already registered' });
+
+    // Generate invitation token
+    const invitationToken = crypto.randomBytes(20).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(invitationToken).digest('hex');
+    const invitationExpire = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    // Create user with random password and pending status
+    const tempPassword = crypto.randomBytes(8).toString('hex');
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(tempPassword, salt);
+
+    const user = await User.create({
+      full_name,
+      email,
+      password_hash,
+      roles: roleIds,
+      stationId,
+      divisionId,
+      warehouseIds,
+      isActive: false,
+      isPending: true,
+      invitationToken: hashedToken,
+      invitationExpire: invitationExpire
+    });
+
+    const inviteUrl = `${process.env.FRONTEND_URL}/accept-invitation?token=${invitationToken}&email=${email}`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <h2 style="color: #42369E; margin-bottom: 20px;">Welcome to SL Railway Portal</h2>
+        <p style="color: #4a5568; line-height: 1.6;">Hello ${full_name},</p>
+        <p style="color: #4a5568; line-height: 1.6;">You have been invited to join the Sri Lankan Railway Department's Inventory & Asset Management System.</p>
+        <p style="color: #4a5568; line-height: 1.6;">Click the button below to accept the invitation and set up your password.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${inviteUrl}" style="background-color: #42369E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Accept Invitation</a>
+        </div>
+        <p style="color: #718096; font-size: 12px; line-height: 1.6;">This link will expire in 7 days.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+        <p style="color: #a0aec0; font-size: 11px;">&copy; 2026 Sri Lankan Railway Department</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail({
+        email,
+        subject: 'You are invited to SL Railway Portal',
+        message: `Welcome to SLR. Accept your invitation here: ${inviteUrl}`,
+        html,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Invitation sent successfully',
+        // Still return invitationToken in development
+        invitationToken: process.env.NODE_ENV === 'development' ? invitationToken : undefined
+      });
+    } catch (error) {
+      await User.findByIdAndDelete(user._id);
+      return res.status(500).json({ message: 'Email could not be sent' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const acceptInvitation = async (req, res) => {
+  const { password } = req.body;
+  const invitationToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+  try {
+    const user = await User.findOne({
+      invitationToken,
+      invitationExpire: { $gt: Date.now() }
+    });
+
+    if (!user) return res.status(400).json({ message: 'Invalid or expired invitation link' });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password_hash = await bcrypt.hash(password, salt);
+    user.isActive = true;
+    user.isPending = false;
+    user.invitationToken = undefined;
+    user.invitationExpire = undefined;
+
+    await user.save();
+    res.status(200).json({ message: 'Account activated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
