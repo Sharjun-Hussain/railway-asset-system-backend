@@ -16,6 +16,7 @@ import {
     getPermissions, createPermission,
     getRoles, createRole, updateRole, deleteRole
 } from '../controllers/roleController.js';
+import { getUsers, updateUser } from '../controllers/authController.js';
 import { protect, hasPermission, checkScope } from '../middlewares/authmiddleware.js';
 
 const router = express.Router();
@@ -32,6 +33,13 @@ router.route('/roles')
 router.route('/roles/:id')
     .put(protect, hasPermission('rbac', 'manage'), updateRole)
     .delete(protect, hasPermission('rbac', 'manage'), deleteRole);
+
+// --- User Management ---
+router.route('/users')
+    .get(protect, hasPermission('user', 'view'), getUsers);
+
+router.route('/users/:id')
+    .put(protect, hasPermission('user', 'manage'), updateUser);
 
 // --- Location Routes ---
 router.route('/divisions')

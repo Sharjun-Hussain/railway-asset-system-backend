@@ -202,3 +202,38 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password_hash')
+      .populate('roles')
+      .populate('divisionId', 'division_name')
+      .populate('stationId', 'station_name')
+      .populate('warehouseIds', 'warehouse_name');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  const { full_name, email, roles, stationId, divisionId, warehouseIds, isActive } = req.body;
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.full_name = full_name || user.full_name;
+    user.email = email || user.email;
+    user.roles = roles || user.roles;
+    user.stationId = stationId !== undefined ? stationId : user.stationId;
+    user.divisionId = divisionId !== undefined ? divisionId : user.divisionId;
+    user.warehouseIds = warehouseIds || user.warehouseIds;
+    user.isActive = isActive !== undefined ? isActive : user.isActive;
+
+    await user.save();
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
