@@ -7,9 +7,9 @@ const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.get('/me', protect, getMe); 
-router.post('/logout', logoutUser);   
-router.get('/refresh', refreshToken); 
+router.get('/me', protect, getMe);
+router.post('/logout', logoutUser);
+router.get('/refresh', refreshToken);
 router.post('/forgot-password', forgotPassword);
 router.put('/resetpassword/:resettoken', resetPassword);
 router.post('/accept-invitation/:token', acceptInvitation);
