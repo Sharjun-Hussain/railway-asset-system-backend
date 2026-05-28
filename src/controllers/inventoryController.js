@@ -1,6 +1,7 @@
 import Stock from "../models/stock.js";
 import Transaction from "../models/transaction.js";
 import Asset from "../models/asset.js";
+import AuditLog from "../models/auditLog.js";
 import { getAllowedWarehouseIds } from "../utils/rbacUtils.js";
 
 // @desc    Get all stock levels
@@ -78,6 +79,23 @@ export const handleTransaction = async (req, res) => {
                 { upsert: true, new: true }
             );
         }
+
+        // 3. Create Audit Log
+        await AuditLog.create({
+            module: "Inventory",
+            action: `STOCK_${type}`, // e.g. STOCK_RECEIVE, STOCK_ISSUE
+            details: {
+                quantity,
+                referenceNo,
+                remarks,
+                warehouseId,
+                toWarehouseId
+            },
+            performedBy: req.user?._id,
+            targetId: assetId,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
 
         res.status(201).json({ 
             message: "Transaction processed successfully",
