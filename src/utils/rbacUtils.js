@@ -14,6 +14,14 @@ const isGlobalUser = (user) => {
     }
 };
 
+const hasPermission = (user, module, action) => {
+    if (!user || !user.roles) return false;
+    return user.roles.some(role => {
+        if (!role.permissions) return false;
+        return role.permissions.some(p => p.module === module && p.name === action);
+    });
+};
+
 export const getAllowedWarehouseIds = async (user) => {
     try {
         if (isGlobalUser(user)) return null;
@@ -65,6 +73,12 @@ export const getAllowedStationIds = async (user) => {
  */
 export const getAllowedDivisionIds = async (user) => {
     if (isGlobalUser(user)) return null;
+
+    // Users with manage permission on divisions should see all divisions
+    if (hasPermission(user, 'division', 'manage')) return null;
+
+    // Global view roles (like Auditor) have view permission but no specific division assigned
+    if (hasPermission(user, 'division', 'view') && !user.divisionId) return null;
 
     if (user.divisionId) return [user.divisionId];
 
