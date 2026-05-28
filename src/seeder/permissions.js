@@ -38,5 +38,8 @@ export const permissions = [
 
     // System Settings
     { module: "setting", name: "view", description: "View system configuration" },
-    { module: "setting", name: "manage", description: "Modify system-wide settings" }
+    { module: "setting", name: "manage", description: "Modify system-wide settings" },
+
+    // Audit Module
+    { module: "audit", name: "view", description: "View system audit logs" }
 ];

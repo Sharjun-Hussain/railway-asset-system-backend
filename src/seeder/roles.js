@@ -10,7 +10,7 @@ export const createRoles = (permMap) => [
         permissions: [
             permMap["division.view"], permMap["division.manage"],
             permMap["station.view"], permMap["station.manage"],
-            permMap["warehouse.view"],
+            permMap["warehouse.view"], permMap["warehouse.manage"],
             permMap["product.view"],
             permMap["stock.view"],
             permMap["user.view"],
@@ -61,7 +61,8 @@ export const createRoles = (permMap) => [
             permMap["station.view"],
             permMap["warehouse.view"],
             permMap["rbac.view"],
-            permMap["user.view"]
+            permMap["user.view"],
+            permMap["audit.view"]
         ]
     }
 ];

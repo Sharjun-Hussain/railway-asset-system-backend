@@ -37,7 +37,7 @@ router.route('/roles/:id')
     .delete(protect, hasPermission('rbac', 'manage'), deleteRole);
 
 // --- System Audit Logs ---
-router.get('/audit-logs', protect, hasPermission('rbac', 'view'), getAuditLogs);
+router.get('/audit-logs', protect, hasPermission('audit', 'view'), getAuditLogs);
 
 // --- User Management ---
 router.route('/users')
