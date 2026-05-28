@@ -83,7 +83,7 @@ export const syncTransactionToRAG = async (transactionId) => {
     const txn = await Transaction.findById(transactionId).populate('assetId warehouseId toWarehouseId performedBy');
     if (!txn || !txn.assetId || !txn.warehouseId) return;
 
-    const content = `Transaction Log
+    const content = `Transaction Log (Stock History)
 Action Type: ${txn.type}
 Asset: ${txn.assetId.asset_name}
 Quantity: ${txn.quantity}

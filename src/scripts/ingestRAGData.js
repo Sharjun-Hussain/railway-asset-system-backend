@@ -87,7 +87,7 @@ Location: Station ${stock.warehouseId.stationId?.name || 'Unknown'}`;
     for (const txn of transactions) {
       if (!txn.assetId || !txn.warehouseId) continue;
       
-      const content = `Transaction Log
+      const content = `Transaction Log (Stock History)
 Action Type: ${txn.type}
 Asset: ${txn.assetId.asset_name}
 Quantity: ${txn.quantity}
@@ -103,9 +103,9 @@ Remarks: ${txn.remarks || 'None'}`;
       });
 
       await RAGknowledge.findOneAndUpdate(
-        { source: "Transaction Log", content: { $regex: txn.referenceNo } }, // Use reference no to match
+        { source: "Transaction Log (Stock History)", content: { $regex: txn.referenceNo } }, // Use reference no to match
         {
-          source: "Transaction Log",
+          source: "Transaction Log (Stock History)",
           content,
           embedding: embeddingResponse.data[0].embedding,
           warehouseId: txn.warehouseId._id,
