@@ -11,4 +11,17 @@ const stockSchema = new mongoose.Schema({
 // Compound index to ensure one stock record per asset per warehouse
 stockSchema.index({ warehouseId: 1, assetId: 1 }, { unique: true });
 
+import { syncStockToRAG } from "../services/ragSyncService.js";
+
+// Auto-sync to RAG on create/update
+stockSchema.post("save", function (doc) {
+  syncStockToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+
+stockSchema.post("findOneAndUpdate", function (doc) {
+  if (doc) {
+    syncStockToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+  }
+});
+
 export default mongoose.model("Stock", stockSchema);

@@ -11,4 +11,17 @@ const assetSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
+import { syncAssetToRAG } from "../services/ragSyncService.js";
+
+// Auto-sync to RAG on create/update
+assetSchema.post("save", function (doc) {
+  syncAssetToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+
+assetSchema.post("findOneAndUpdate", function (doc) {
+  if (doc) {
+    syncAssetToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+  }
+});
+
 export default mongoose.model("Asset", assetSchema);

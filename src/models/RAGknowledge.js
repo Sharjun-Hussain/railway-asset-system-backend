@@ -5,6 +5,10 @@ const ragKnowledgeSchema = new mongoose.Schema({
   content: { type: String, required: true },
   embedding: { type: [Number] }, // vector embedding for AI search
   relatedAssetId: { type: mongoose.Schema.Types.ObjectId, ref: "Asset" },
+  divisionId: { type: mongoose.Schema.Types.ObjectId, ref: "Division" },
+  stationId: { type: mongoose.Schema.Types.ObjectId, ref: "Station" },
+  warehouseId: { type: mongoose.Schema.Types.ObjectId, ref: "Warehouse" },
+  allowedRoles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
   createdAt: { type: Date, default: Date.now }
 });
 

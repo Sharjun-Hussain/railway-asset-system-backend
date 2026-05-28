@@ -19,6 +19,7 @@ import {
 import { getUsers, updateUser, inviteUser } from '../controllers/authController.js';
 import { getAuditLogs } from '../controllers/auditController.js';
 import { protect, hasPermission, checkScope } from '../middlewares/authmiddleware.js';
+import { handleRagQuery } from '../controllers/ragController.js';
 
 const router = express.Router();
 
@@ -105,5 +106,8 @@ router.get("/inventory/asset/:id", protect, hasPermission('stock', 'view'), getA
 router.route('/transactions')
     .get(protect, hasPermission('stock', 'view'), getTransactions)
     .post(protect, hasPermission('stock', 'receive'), checkScope('warehouse'), handleTransaction);
+
+// --- AI / RAG Routes ---
+router.post('/rag/query', protect, handleRagQuery);
 
 export default router;

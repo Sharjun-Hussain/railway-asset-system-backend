@@ -42,4 +42,11 @@ const transactionSchema = new mongoose.Schema({
     }
 });
 
+import { syncTransactionToRAG } from "../services/ragSyncService.js";
+
+// Auto-sync historical transactions to RAG on creation
+transactionSchema.post("save", function (doc) {
+  syncTransactionToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+
 export default mongoose.model("Transaction", transactionSchema);

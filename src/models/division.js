@@ -8,4 +8,13 @@ const divisionSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
+import { syncDivisionToRAG } from "../services/ragSyncService.js";
+
+divisionSchema.post("save", function (doc) {
+  syncDivisionToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+divisionSchema.post("findOneAndUpdate", function (doc) {
+  if (doc) syncDivisionToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+
 export default mongoose.model("Division", divisionSchema);
