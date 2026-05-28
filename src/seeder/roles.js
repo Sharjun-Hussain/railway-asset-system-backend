@@ -11,7 +11,7 @@ export const createRoles = (permMap) => [
             permMap["division.view"], permMap["division.manage"],
             permMap["station.view"], permMap["station.manage"],
             permMap["warehouse.view"], permMap["warehouse.manage"],
-            permMap["product.view"],
+            permMap["product.view"], permMap["product.manage"],
             permMap["stock.view"],
             permMap["user.view"],
             permMap["report.view"]
@@ -24,7 +24,7 @@ export const createRoles = (permMap) => [
             permMap["division.view"],
             permMap["station.view"],
             permMap["warehouse.view"], permMap["warehouse.manage"],
-            permMap["product.view"],
+            permMap["product.view"], permMap["product.manage"],
             permMap["stock.view"],
             permMap["stock.receive"], permMap["stock.issue"],
             permMap["report.view"]
@@ -35,7 +35,7 @@ export const createRoles = (permMap) => [
         name: "Warehouse Manager",
         description: "Warehouse level operations",
         permissions: [
-            permMap["product.view"],
+            permMap["product.view"], permMap["product.manage"],
             permMap["stock.view"],
             permMap["stock.receive"], permMap["stock.issue"], permMap["stock.transfer"],
             permMap["stock.audit"]
@@ -45,7 +45,7 @@ export const createRoles = (permMap) => [
         name: "Staff",
         description: "Basic operations",
         permissions: [
-            permMap["product.view"],
+            permMap["product.view"], permMap["product.manage"],
             permMap["stock.view"],
             permMap["stock.receive"]
         ]
