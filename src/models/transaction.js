@@ -4,7 +4,7 @@ const transactionSchema = new mongoose.Schema({
     type: { 
         type: String, 
         required: true, 
-        enum: ["RECEIVE", "ISSUE", "TRANSFER"] 
+        enum: ["RECEIVE", "ISSUE", "TRANSFER", "ADJUST"] 
     },
     assetId: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -23,7 +23,11 @@ const transactionSchema = new mongoose.Schema({
     },
     quantity: { 
         type: Number, 
-        required: true 
+        required: true,
+        validate: {
+            validator: Number.isInteger,
+            message: '{VALUE} is not an integer value for quantity'
+        }
     },
     referenceNo: { 
         type: String, 

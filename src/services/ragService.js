@@ -7,42 +7,44 @@ const openai = new OpenAI({
 
 export const queryRAG = async (prompt, user) => {
   try {
-    console.log("\n================ RAG FLOW STARTED ================");
-    console.log("1. User Prompt:", prompt);
-    console.log("2. Requesting Embeddings from OpenAI...");
+    console.log("User Prompt:", prompt);
 
-    // 1. Generate Embedding for the user's prompt
+    // console.log("Prompt:", prompt);
+
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: prompt,
     });
-    
+
     const queryVector = embeddingResponse.data[0].embedding;
 
-    // 2. Build pre-filter based on user's SCOPE only (division/station/warehouse).
-    // Roles are NOT used as filters because global assets have no allowedRoles set.
-    // Only restrict by physical scope when the user is explicitly scoped to a location.
     const filterConditions = [];
 
-    // Scope-based matching ONLY
     if (user.divisionId) {
-        filterConditions.push({ divisionId: user.divisionId });
+      filterConditions.push({ divisionId: user.divisionId });
     }
     if (user.stationId) {
-        filterConditions.push({ stationId: user.stationId });
+      filterConditions.push({ stationId: user.stationId });
     }
     if (user.warehouseIds && user.warehouseIds.length > 0) {
-        filterConditions.push({ warehouseId: { $in: user.warehouseIds } });
+      filterConditions.push({ warehouseId: { $in: user.warehouseIds } });
     }
 
-    // If the user has NO scope restrictions (e.g. Super Admin), run without any filter.
-    // If user IS scoped (e.g. Warehouse Manager), apply the scope filter.
     let matchFilter = undefined;
     if (filterConditions.length > 0) {
-        matchFilter = { $or: filterConditions };
+      matchFilter = { 
+        $or: [
+          ...filterConditions,
+          {
+            divisionId: { $exists: false },
+            stationId: { $exists: false },
+            warehouseId: { $exists: false }
+          }
+        ] 
+      };
     }
 
-    console.log("3. Filter Conditions Built:", JSON.stringify(matchFilter || "NO FILTER (Admin/Global)"));
+
 
     const vectorSearchQuery = {
       index: "vector_index",
@@ -56,7 +58,6 @@ export const queryRAG = async (prompt, user) => {
       vectorSearchQuery.filter = matchFilter;
     }
 
-    // 3. Query MongoDB Vector Search
     const searchResults = await RAGknowledge.aggregate([
       {
         $vectorSearch: vectorSearchQuery
@@ -70,19 +71,23 @@ export const queryRAG = async (prompt, user) => {
       }
     ]);
 
-    // Format the retrieved context
     const context = searchResults.map(doc => `[Source: ${doc.source}]\n${doc.content}`).join("\n\n");
-    console.log("4. Context Extracted from MongoDB:");
-    console.log(context ? context : "NO RELEVANT CONTEXT FOUND.");
 
-    console.log("5. Sending Prompt + Context to OpenAI GPT...");
-    // 4. Send to OpenAI Chat
+    // console.log("Context:", context);
+
+    const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
     const chatResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are an intelligent AI assistant for the Railway Administration Dashboard. Answer the user's question based ONLY on the provided context below. If the answer is not in the context, say you don't have enough information.\n\nContext:\n${context}`
+          content: `You are an intelligent AI assistant for the Railway Administration Dashboard. Today's date is ${currentDate}. 
+Answer the user's question based ONLY on the provided context below. If the answer is not in the context, say you don't have enough information.
+When listing records (transactions, assets, stock levels), format each record as a separate numbered item with a bold title header (e.g. "1. **RECEIVE — Single Relay**"), followed by its fields as indented bullet points underneath. Always add a blank line between each numbered record to visually separate them. Never mix fields from different records into a single flat list. Each record must be self-contained and clearly separated.
+
+Context:
+${context}`
         },
         {
           role: "user",
@@ -92,11 +97,6 @@ export const queryRAG = async (prompt, user) => {
     });
 
     const finalAnswer = chatResponse.choices[0].message.content;
-    
-    console.log("6. OpenAI Final Response:");
-    console.log(finalAnswer);
-    console.log("================ RAG FLOW COMPLETED ================\n");
-
     return finalAnswer;
 
   } catch (error) {

@@ -1,13 +1,10 @@
 import Station from "../models/station.js";
 import Warehouse from "../models/warehouse.js";
 import User from "../models/user.js";
+import AuditLog from "../models/auditLog.js";
 import { getAllowedStationIds } from "../utils/rbacUtils.js";
 
-/**
- * @desc    Get all stations
- * @route   GET /api/stations
- * @access  Private/Protected
- */
+
 export const getStations = async (req, res) => {
     try {
         const allowedStationIds = await getAllowedStationIds(req.user);
@@ -36,11 +33,7 @@ export const getStations = async (req, res) => {
     }
 };
 
-/**
- * @desc    Create a new station
- * @route   POST /api/stations
- * @access  Private/Manage
- */
+
 export const createStation = async (req, res) => {
     try {
         const { station_name, station_code, address, divisionId, is_active } = req.body;
@@ -61,6 +54,16 @@ export const createStation = async (req, res) => {
             is_active: is_active !== undefined ? is_active : true
         });
 
+        await AuditLog.create({
+            module: "System Administration",
+            action: "CREATE_STATION",
+            details: { station_name, station_code, divisionId },
+            performedBy: req.user?._id,
+            targetId: station._id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
         res.status(201).json({
             success: true,
             data: station
@@ -74,11 +77,7 @@ export const createStation = async (req, res) => {
     }
 };
 
-/**
- * @desc    Update a station
- * @route   PUT /api/stations/:id
- * @access  Private/Manage
- */
+
 export const updateStation = async (req, res) => {
     try {
         const { id } = req.params;
@@ -109,6 +108,16 @@ export const updateStation = async (req, res) => {
             { new: true, runValidators: true }
         );
 
+        await AuditLog.create({
+            module: "System Administration",
+            action: "UPDATE_STATION",
+            details: { station_name, station_code, is_active },
+            performedBy: req.user?._id,
+            targetId: station._id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
         res.status(200).json({
             success: true,
             data: station
@@ -122,11 +131,7 @@ export const updateStation = async (req, res) => {
     }
 };
 
-/**
- * @desc    Delete a station
- * @route   DELETE /api/stations/:id
- * @access  Private/Manage
- */
+
 export const deleteStation = async (req, res) => {
     try {
         const { id } = req.params;
@@ -139,7 +144,7 @@ export const deleteStation = async (req, res) => {
             });
         }
 
-        // Check for linked warehouses
+       
         const warehousesCount = await Warehouse.countDocuments({ stationId: id });
         if (warehousesCount > 0) {
             return res.status(400).json({
@@ -148,7 +153,7 @@ export const deleteStation = async (req, res) => {
             });
         }
 
-        // Check for linked users
+       
         const usersCount = await User.countDocuments({ stationId: id });
         if (usersCount > 0) {
             return res.status(400).json({
@@ -158,6 +163,16 @@ export const deleteStation = async (req, res) => {
         }
 
         await Station.findByIdAndDelete(id);
+
+        await AuditLog.create({
+            module: "System Administration",
+            action: "DELETE_STATION",
+            details: { station_name: station.station_name, station_code: station.station_code },
+            performedBy: req.user?._id,
+            targetId: id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
 
         res.status(200).json({
             success: true,

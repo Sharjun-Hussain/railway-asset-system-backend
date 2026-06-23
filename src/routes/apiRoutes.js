@@ -16,7 +16,7 @@ import {
     getPermissions, createPermission,
     getRoles, createRole, updateRole, deleteRole
 } from '../controllers/roleController.js';
-import { getUsers, updateUser, inviteUser } from '../controllers/authController.js';
+import { getUsers, updateUser, inviteUser, getMe } from '../controllers/authController.js';
 import { getAuditLogs } from '../controllers/auditController.js';
 import { protect, hasPermission, checkScope } from '../middlewares/authmiddleware.js';
 import { handleRagQuery } from '../controllers/ragController.js';
@@ -40,6 +40,9 @@ router.route('/roles/:id')
 router.get('/audit-logs', protect, hasPermission('audit', 'view'), getAuditLogs);
 
 // --- User Management ---
+router.route('/users/me')
+    .get(protect, getMe);
+
 router.route('/users')
     .get(protect, hasPermission('user', 'view'), getUsers)
     .post(protect, hasPermission('user', 'manage'), inviteUser);
@@ -50,27 +53,27 @@ router.route('/users/:id')
 // --- Location Routes ---
 router.route('/divisions')
     .get(protect, hasPermission('division', 'view'), getDivisions)
-    .post(protect, hasPermission('division', 'manage'), createDivision);
+    .post(protect, hasPermission('division', 'manage'), checkScope('division'), createDivision);
 
 router.route('/divisions/:id')
-    .put(protect, hasPermission('division', 'manage'), updateDivision)
-    .delete(protect, hasPermission('division', 'manage'), deleteDivision);
+    .put(protect, hasPermission('division', 'manage'), checkScope('division'), updateDivision)
+    .delete(protect, hasPermission('division', 'manage'), checkScope('division'), deleteDivision);
 
 router.route('/stations')
     .get(protect, hasPermission('station', 'view'), getStations)
-    .post(protect, hasPermission('station', 'manage'), createStation);
+    .post(protect, hasPermission('station', 'manage'), checkScope('division'), createStation);
 
 router.route('/stations/:id')
-    .put(protect, hasPermission('station', 'manage'), updateStation)
-    .delete(protect, hasPermission('station', 'manage'), deleteStation);
+    .put(protect, hasPermission('station', 'manage'), checkScope('station'), checkScope('division'), updateStation)
+    .delete(protect, hasPermission('station', 'manage'), checkScope('station'), checkScope('division'), deleteStation);
 
 router.route('/warehouses')
     .get(protect, hasPermission('warehouse', 'view'), getWarehouses)
-    .post(protect, hasPermission('warehouse', 'manage'), createWarehouse);
+    .post(protect, hasPermission('warehouse', 'manage'), checkScope('station'), createWarehouse);
 
 router.route('/warehouses/:id')
-    .put(protect, hasPermission('warehouse', 'manage'), updateWarehouse)
-    .delete(protect, hasPermission('warehouse', 'manage'), deleteWarehouse);
+    .put(protect, hasPermission('warehouse', 'manage'), checkScope('warehouse'), checkScope('station'), updateWarehouse)
+    .delete(protect, hasPermission('warehouse', 'manage'), checkScope('warehouse'), checkScope('station'), deleteWarehouse);
 
 
 // --- Asset Routes ---

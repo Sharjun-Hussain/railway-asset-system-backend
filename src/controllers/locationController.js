@@ -2,9 +2,10 @@ import Station from '../models/station.js';
 import Warehouse from '../models/warehouse.js';
 import Stock from '../models/stock.js';
 import User from '../models/user.js';
+import AuditLog from '../models/auditLog.js';
 import { getAllowedWarehouseIds } from '../utils/rbacUtils.js';
 
-// --- Warehouses ---
+
 export const getWarehouses = async (req, res) => {
     try {
         const allowedWarehouseIds = await getAllowedWarehouseIds(req.user);
@@ -48,6 +49,16 @@ export const createWarehouse = async (req, res) => {
             is_active: is_active !== undefined ? is_active : true
         });
 
+        await AuditLog.create({
+            module: "System Administration",
+            action: "CREATE_WAREHOUSE",
+            details: { warehouse_name, warehouse_type, stationId },
+            performedBy: req.user?._id,
+            targetId: warehouse._id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
         res.status(201).json({
             success: true,
             data: warehouse
@@ -79,6 +90,16 @@ export const updateWarehouse = async (req, res) => {
             { warehouse_name, warehouse_type, stationId, description, is_active, updatedAt: Date.now() },
             { new: true, runValidators: true }
         );
+
+        await AuditLog.create({
+            module: "System Administration",
+            action: "UPDATE_WAREHOUSE",
+            details: { warehouse_name, warehouse_type, is_active },
+            performedBy: req.user?._id,
+            targetId: warehouse._id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
 
         res.status(200).json({
             success: true,
@@ -124,6 +145,16 @@ export const deleteWarehouse = async (req, res) => {
         }
 
         await Warehouse.findByIdAndDelete(id);
+
+        await AuditLog.create({
+            module: "System Administration",
+            action: "DELETE_WAREHOUSE",
+            details: { warehouse_name: warehouse.warehouse_name },
+            performedBy: req.user?._id,
+            targetId: id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
 
         res.status(200).json({
             success: true,

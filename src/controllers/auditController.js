@@ -1,8 +1,5 @@
 import AuditLog from "../models/auditLog.js";
 
-/**
- * Utility to log an action
- */
 export const logActivity = async (req, module, action, details = {}, targetId = null) => {
     try {
         await AuditLog.create({
@@ -26,7 +23,7 @@ export const getAuditLogs = async (req, res) => {
     try {
         const { module, action, limit = 50, page = 1 } = req.query;
         const query = {};
-        
+
         if (module) query.module = module;
         if (action) query.action = action;
 

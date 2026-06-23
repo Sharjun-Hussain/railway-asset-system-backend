@@ -1,7 +1,7 @@
 import Permission from '../models/permission.js';
 import Role from '../models/role.js';
 
-// --- Permissions ---
+
 export const getPermissions = async (req, res) => {
     try {
         const permissions = await Permission.find().sort({ module: 1, name: 1 });

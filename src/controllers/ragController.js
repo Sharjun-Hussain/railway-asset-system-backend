@@ -8,7 +8,7 @@ export const handleRagQuery = async (req, res) => {
       return res.status(400).json({ success: false, message: "Prompt is required" });
     }
 
-    // req.user should be populated by the authMiddleware
+
     const answer = await queryRAG(prompt, req.user);
 
     res.status(200).json({

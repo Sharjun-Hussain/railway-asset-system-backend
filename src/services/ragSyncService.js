@@ -45,7 +45,10 @@ export const syncStockToRAG = async (stockId) => {
   try {
     const stock = await Stock.findById(stockId).populate({
         path: 'warehouseId',
-        populate: { path: 'stationId' }
+        populate: { 
+            path: 'stationId',
+            populate: { path: 'divisionId' }
+        }
     }).populate('assetId');
 
     if (!stock || !stock.assetId || !stock.warehouseId) return;
@@ -70,6 +73,7 @@ Location: Station ${stock.warehouseId.stationId?.name || 'Unknown'}`;
         embedding: embeddingResponse.data[0].embedding,
         warehouseId: stock.warehouseId._id,
         stationId: stock.warehouseId.stationId?._id || null,
+        divisionId: stock.warehouseId.stationId?.divisionId?._id || null,
       },
       { upsert: true, new: true }
     );
@@ -80,8 +84,20 @@ Location: Station ${stock.warehouseId.stationId?.name || 'Unknown'}`;
 
 export const syncTransactionToRAG = async (transactionId) => {
   try {
-    const txn = await Transaction.findById(transactionId).populate('assetId warehouseId toWarehouseId performedBy');
+    const txn = await Transaction.findById(transactionId)
+      .populate('assetId toWarehouseId performedBy')
+      .populate({
+        path: 'warehouseId',
+        populate: { 
+            path: 'stationId',
+            populate: { path: 'divisionId' }
+        }
+      });
     if (!txn || !txn.assetId || !txn.warehouseId) return;
+
+    const txnDate = new Date(txn.createdAt).toLocaleDateString('en-US', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
 
     const content = `Transaction Log (Stock History)
 Action Type: ${txn.type}
@@ -90,7 +106,7 @@ Quantity: ${txn.quantity}
 Reference No: ${txn.referenceNo}
 From Warehouse: ${txn.warehouseId.warehouse_name}
 ${txn.toWarehouseId ? `To Warehouse: ${txn.toWarehouseId.warehouse_name}\n` : ''}Performed By: ${txn.performedBy?.full_name || 'Unknown'}
-Date: ${txn.createdAt}
+Date: ${txnDate}
 Remarks: ${txn.remarks || 'None'}`;
 
     const embeddingResponse = await openai.embeddings.create({
@@ -103,6 +119,8 @@ Remarks: ${txn.remarks || 'None'}`;
       content,
       embedding: embeddingResponse.data[0].embedding,
       warehouseId: txn.warehouseId._id,
+      stationId: txn.warehouseId.stationId?._id || null,
+      divisionId: txn.warehouseId.stationId?.divisionId?._id || null,
     });
   } catch (error) {
     console.error("Background RAG Sync Error (Transaction):", error);

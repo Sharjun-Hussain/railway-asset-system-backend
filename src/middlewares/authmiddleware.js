@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 
-// Middleware to verify the JWT and populate roles/permissions
 export const protect = async (req, res, next) => {
   let token;
 
@@ -10,7 +9,6 @@ export const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
-      // Populate roles and their permissions
       req.user = await User.findById(decoded.id)
         .select('-password_hash')
         .populate({
@@ -34,13 +32,10 @@ export const protect = async (req, res, next) => {
   }
 };
 
-/**
- * Middleware to check if the user has a specific permission in a module.
- * Usage: hasPermission('stock', 'receive')
- */
+
 export const hasPermission = (module, permissionName) => {
   return (req, res, next) => {
-    // Super Admin bypasses all checks
+   
     const roles = req.user.roles || [];
     const isSuperAdmin = roles.some(role => role.name === 'Super Admin');
     if (isSuperAdmin) return next();
@@ -61,17 +56,14 @@ export const hasPermission = (module, permissionName) => {
   };
 };
 
-/**
- * Middleware to enforce data scoping.
- * Ensures users can only access data within their assigned Station, Division, or Warehouses.
- */
+
 export const checkScope = (scopeType) => {
   return (req, res, next) => {
     const roles = req.user.roles || [];
     const isSuperAdmin = roles.some(role => role.name === 'Super Admin');
     if (isSuperAdmin) return next();
 
-    // Check station scope
+
     if (scopeType === 'station') {
       const stationId = req.params.stationId || req.body.stationId || req.query.stationId || (req.params.id && req.baseUrl.includes('stations') ? req.params.id : null);
       if (stationId && req.user.stationId && stationId.toString() !== req.user.stationId.toString()) {
@@ -79,7 +71,7 @@ export const checkScope = (scopeType) => {
       }
     }
 
-    // Check division scope
+
     if (scopeType === 'division') {
       const divisionId = req.params.divisionId || req.body.divisionId || req.query.divisionId || (req.params.id && req.baseUrl.includes('divisions') ? req.params.id : null);
       if (divisionId && req.user.divisionId && divisionId.toString() !== req.user.divisionId.toString()) {

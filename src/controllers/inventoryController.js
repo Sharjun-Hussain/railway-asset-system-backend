@@ -4,8 +4,7 @@ import Asset from "../models/asset.js";
 import AuditLog from "../models/auditLog.js";
 import { getAllowedWarehouseIds } from "../utils/rbacUtils.js";
 
-// @desc    Get all stock levels
-// @route   GET /api/v1/inventory
+
 export const getStock = async (req, res) => {
     try {
         const warehouseIds = await getAllowedWarehouseIds(req.user);
@@ -22,13 +21,12 @@ export const getStock = async (req, res) => {
     }
 };
 
-// @desc    Update stock via transaction (Receive, Issue, Transfer)
-// @route   POST /api/v1/inventory/transaction
+
 export const handleTransaction = async (req, res) => {
     const { type, assetId, warehouseId, toWarehouseId, quantity, referenceNo, remarks } = req.body;
 
     try {
-        // 1. Log the transaction
+
         const transaction = await Transaction.create({
             type,
             assetId,
@@ -40,7 +38,6 @@ export const handleTransaction = async (req, res) => {
             performedBy: req.user?._id
         });
 
-        // 2. Update Stock Levels
         if (type === "RECEIVE") {
             await Stock.findOneAndUpdate(
                 { assetId, warehouseId },
@@ -56,7 +53,7 @@ export const handleTransaction = async (req, res) => {
             stock.updatedAt = Date.now();
             await stock.save();
         } else if (type === "TRANSFER") {
-            // Subtract from source
+
             const sourceStock = await Stock.findOne({ assetId, warehouseId });
             if (!sourceStock || sourceStock.quantity < quantity) {
                 return res.status(400).json({ message: "Insufficient stock at source warehouse" });
@@ -65,14 +62,14 @@ export const handleTransaction = async (req, res) => {
             sourceStock.updatedAt = Date.now();
             await sourceStock.save();
 
-            // Add to destination
+           
             await Stock.findOneAndUpdate(
                 { assetId, warehouseId: toWarehouseId },
                 { $inc: { quantity: quantity }, updatedAt: Date.now() },
                 { upsert: true, new: true }
             );
         } else if (type === "ADJUST") {
-            // For adjustments, we allow both positive and negative quantity changes
+    
             await Stock.findOneAndUpdate(
                 { assetId, warehouseId },
                 { $inc: { quantity: quantity }, updatedAt: Date.now() },
@@ -80,10 +77,10 @@ export const handleTransaction = async (req, res) => {
             );
         }
 
-        // 3. Create Audit Log
+      
         await AuditLog.create({
             module: "Inventory",
-            action: `STOCK_${type}`, // e.g. STOCK_RECEIVE, STOCK_ISSUE
+            action: `STOCK_${type}`, 
             details: {
                 quantity,
                 referenceNo,
@@ -106,8 +103,7 @@ export const handleTransaction = async (req, res) => {
     }
 };
 
-// @desc    Get transaction history
-// @route   GET /api/v1/transactions
+
 export const getTransactions = async (req, res) => {
     try {
         const warehouseIds = await getAllowedWarehouseIds(req.user);
@@ -130,8 +126,7 @@ export const getTransactions = async (req, res) => {
     }
 };
 
-// @desc    Get stock for a specific asset
-// @route   GET /api/v1/inventory/asset/:id
+
 export const getAssetStock = async (req, res) => {
     try {
         const warehouseIds = await getAllowedWarehouseIds(req.user);

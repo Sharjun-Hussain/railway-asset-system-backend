@@ -6,6 +6,7 @@ import apiRoutes from './routes/apiRoutes.js';
 import cookieParser from "cookie-parser";
 
 const app = express();
+app.set("trust proxy", true);
 app.use(cors(
     {
         credentials: true,
@@ -19,7 +20,7 @@ app.use(cookieParser());
 connectDB();
 
 app.use("/test", (req, res) => {
-    res.send("API is working properly")
+    res.send("API is working")
 })
 
 app.use('/api/v1/auth', authRoutes);

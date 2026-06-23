@@ -6,7 +6,14 @@ const stockTransactionSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     type: { type: String, enum: ["Receive", "Issue", "Transfer", "Adjustment"], required: true },
-    quantity: { type: Number, required: true },
+    quantity: { 
+        type: Number, 
+        required: true,
+        validate: {
+            validator: Number.isInteger,
+            message: '{VALUE} is not an integer value for quantity'
+        }
+    },
     reason: { type: String },
     createdAt: { type: Date, default: Date.now }
 });

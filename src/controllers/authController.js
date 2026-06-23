@@ -6,7 +6,6 @@ import crypto from 'crypto';
 import sendEmail from '../utils/sendEmail.js';
 import { logActivity } from './auditController.js';
 
-// --- Helper Functions ---
 const generateAccessToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_ACCESS_SECRET, {
     expiresIn: '1d',
@@ -121,7 +120,17 @@ export const registerUser = async (req, res) => {
 };
 
 export const getMe = async (req, res) => {
-  res.status(200).json(req.user);
+  try {
+    const user = await User.findById(req.user._id)
+      .select('-password_hash')
+      .populate('roles')
+      .populate('divisionId', 'division_name')
+      .populate('stationId', 'station_name')
+      .populate('warehouseIds', 'warehouse_name');
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const forgotPassword = async (req, res) => {
@@ -166,7 +175,6 @@ export const forgotPassword = async (req, res) => {
       res.status(200).json({
         success: true,
         message: 'Password reset link sent to email',
-        // Still return resetToken in development for easy testing
         resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
       });
     } catch (error) {
@@ -233,9 +241,14 @@ export const updateUser = async (req, res) => {
     user.isActive = isActive !== undefined ? isActive : user.isActive;
 
     await user.save();
-    
+
+    let action = 'UPDATE_USER';
+    if (Object.keys(req.body).length === 1 && isActive !== undefined) {
+      action = isActive ? 'ACTIVATE_USER' : 'DEACTIVATE_USER';
+    }
+
     // Log Activity
-    await logActivity(req, 'USER', 'UPDATE', { 
+    await logActivity(req, 'System Administration', action, {
       targetUser: user.email,
       updates: Object.keys(req.body)
     }, user._id);
@@ -303,9 +316,9 @@ export const inviteUser = async (req, res) => {
       });
 
       // Log Activity
-      await logActivity(req, 'USER', 'INVITE', { 
+      await logActivity(req, 'System Administration', 'INVITE_USER', {
         invitedEmail: email,
-        assignedRoles: roleIds 
+        assignedRoles: roleIds
       }, user._id);
 
       res.status(201).json({

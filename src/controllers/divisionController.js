@@ -1,12 +1,9 @@
 import Division from "../models/division.js";
 import Station from "../models/station.js";
+import AuditLog from "../models/auditLog.js";
 import { getAllowedDivisionIds } from "../utils/rbacUtils.js";
 
-/**
- * @desc    Get all divisions
- * @route   GET /api/divisions
- * @access  Private/Protected
- */
+
 export const getDivisions = async (req, res) => {
     try {
         const divisionIds = await getAllowedDivisionIds(req.user);
@@ -26,11 +23,7 @@ export const getDivisions = async (req, res) => {
     }
 };
 
-/**
- * @desc    Create a new division
- * @route   POST /api/divisions
- * @access  Private/Manage
- */
+
 export const createDivision = async (req, res) => {
     try {
         const { division_name, region, is_active } = req.body;
@@ -48,6 +41,17 @@ export const createDivision = async (req, res) => {
             region,
             is_active: is_active !== undefined ? is_active : true
         });
+
+        await AuditLog.create({
+            module: "System Administration",
+            action: "CREATE_DIVISION",
+            details: { division_name, region },
+            performedBy: req.user?._id,
+            targetId: division._id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
         res.status(201).json({
             success: true,
             data: division
@@ -61,11 +65,7 @@ export const createDivision = async (req, res) => {
     }
 };
 
-/**
- * @desc    Update a division
- * @route   PUT /api/divisions/:id
- * @access  Private/Manage
- */
+
 export const updateDivision = async (req, res) => {
     try {
         const { id } = req.params;
@@ -79,7 +79,7 @@ export const updateDivision = async (req, res) => {
             });
         }
 
-        // Check if name is changing and if it is unique
+       
         if (division_name && division_name !== division.division_name) {
             const nameExists = await Division.findOne({ division_name });
             if (nameExists) {
@@ -96,6 +96,16 @@ export const updateDivision = async (req, res) => {
             { new: true, runValidators: true }
         );
 
+        await AuditLog.create({
+            module: "System Administration",
+            action: "UPDATE_DIVISION",
+            details: { division_name, region, is_active },
+            performedBy: req.user?._id,
+            targetId: division._id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+
         res.status(200).json({
             success: true,
             data: division
@@ -109,11 +119,7 @@ export const updateDivision = async (req, res) => {
     }
 };
 
-/**
- * @desc    Delete a division
- * @route   DELETE /api/divisions/:id
- * @access  Private/Manage
- */
+
 export const deleteDivision = async (req, res) => {
     try {
         const { id } = req.params;
@@ -136,6 +142,16 @@ export const deleteDivision = async (req, res) => {
         }
 
         await Division.findByIdAndDelete(id);
+
+        await AuditLog.create({
+            module: "System Administration",
+            action: "DELETE_DIVISION",
+            details: { division_name: division.division_name },
+            performedBy: req.user?._id,
+            targetId: id,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+        });
 
         res.status(200).json({
             success: true,

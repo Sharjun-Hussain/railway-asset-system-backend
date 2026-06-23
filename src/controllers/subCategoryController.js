@@ -2,7 +2,7 @@ import asset from '../models/asset.js';
 import SubCategory from '../models/subcategory.js';
 
 
-// Get all sub-categories
+
 export const getSubCategories = async (req, res) => {
     try {
         const filter = {};
@@ -16,7 +16,7 @@ export const getSubCategories = async (req, res) => {
     }
 };
 
-// Create a new sub-category
+
 export const createSubCategory = async (req, res) => {
     try {
         const subCategory = await SubCategory.create(req.body);
@@ -26,7 +26,7 @@ export const createSubCategory = async (req, res) => {
     }
 };
 
-// Update a sub-category
+
 export const updateSubCategory = async (req, res) => {
     try {
         const subCategory = await SubCategory.findByIdAndUpdate(
@@ -41,10 +41,10 @@ export const updateSubCategory = async (req, res) => {
     }
 };
 
-// Delete a sub-category
+
 export const deleteSubCategory = async (req, res) => {
     try {
-        // Check if there are any products using this sub-category
+        
         const productCount = await asset.countDocuments({ subCategoryId: req.params.id });
         if (productCount > 0) {
             return res.status(400).json({
