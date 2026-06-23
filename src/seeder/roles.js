@@ -35,6 +35,9 @@ export const createRoles = (permMap) => [
         name: "Warehouse Manager",
         description: "Warehouse level operations",
         permissions: [
+            permMap["division.view"],
+            permMap["station.view"],
+            permMap["warehouse.view"],
             permMap["product.view"], permMap["product.manage"],
             permMap["stock.view"],
             permMap["stock.receive"], permMap["stock.issue"], permMap["stock.transfer"],
@@ -45,6 +48,9 @@ export const createRoles = (permMap) => [
         name: "Staff",
         description: "Basic operations",
         permissions: [
+            permMap["division.view"],
+            permMap["station.view"],
+            permMap["warehouse.view"],
             permMap["product.view"], permMap["product.manage"],
             permMap["stock.view"],
             permMap["stock.receive"]
