@@ -18,8 +18,7 @@ const stockSchema = new mongoose.Schema({
 
 stockSchema.index({ warehouseId: 1, assetId: 1 }, { unique: true });
 
-import { syncStockToRAG } from "../services/ragSyncService.js";
-
+import { syncStockToRAG, removeFromRAG } from "../services/ragSyncService.js";
 
 stockSchema.post("save", function (doc) {
   syncStockToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
@@ -27,8 +26,16 @@ stockSchema.post("save", function (doc) {
 
 stockSchema.post("findOneAndUpdate", function (doc) {
   if (doc) {
-    syncStockToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+    if (doc.quantity <= 0) {
+      removeFromRAG({ stockId: doc._id });
+    } else {
+      syncStockToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+    }
   }
+});
+
+stockSchema.post("findOneAndDelete", function (doc) {
+  if (doc) removeFromRAG({ stockId: doc._id });
 });
 
 export default mongoose.model("Stock", stockSchema);

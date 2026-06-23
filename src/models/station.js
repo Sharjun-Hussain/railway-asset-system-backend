@@ -10,13 +10,16 @@ const stationSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-import { syncStationToRAG } from "../services/ragSyncService.js";
+import { syncStationToRAG, removeFromRAG } from "../services/ragSyncService.js";
 
 stationSchema.post("save", function (doc) {
   syncStationToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
 });
 stationSchema.post("findOneAndUpdate", function (doc) {
   if (doc) syncStationToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+stationSchema.post("findOneAndDelete", function (doc) {
+  if (doc) removeFromRAG({ stationId: doc._id }).catch(err => console.error("RAG Sync Error:", err));
 });
 
 export default mongoose.model("Station", stationSchema);

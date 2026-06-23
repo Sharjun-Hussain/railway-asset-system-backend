@@ -10,13 +10,16 @@ const warehouseSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-import { syncWarehouseToRAG } from "../services/ragSyncService.js";
+import { syncWarehouseToRAG, removeFromRAG } from "../services/ragSyncService.js";
 
 warehouseSchema.post("save", function (doc) {
   syncWarehouseToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
 });
 warehouseSchema.post("findOneAndUpdate", function (doc) {
   if (doc) syncWarehouseToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+warehouseSchema.post("findOneAndDelete", function (doc) {
+  if (doc) removeFromRAG({ warehouseId: doc._id }).catch(err => console.error("RAG Sync Error:", err));
 });
 
 export default mongoose.model("Warehouse", warehouseSchema);

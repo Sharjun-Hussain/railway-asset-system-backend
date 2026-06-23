@@ -19,7 +19,7 @@ import {
 import { getUsers, updateUser, inviteUser, getMe } from '../controllers/authController.js';
 import { getAuditLogs } from '../controllers/auditController.js';
 import { protect, hasPermission, checkScope } from '../middlewares/authmiddleware.js';
-import { handleRagQuery } from '../controllers/ragController.js';
+import { handleRagQuery, getRagHistory } from '../controllers/ragController.js';
 import { downloadDatabaseBackup } from '../controllers/backupController.js';
 
 const router = express.Router();
@@ -113,6 +113,7 @@ router.route('/transactions')
 
 // --- AI / RAG Routes ---
 router.post('/rag/query', protect, handleRagQuery);
+router.get('/rag/history', protect, getRagHistory);
 // --- System Maintenance ---
 router.get('/backup/export', protect, downloadDatabaseBackup);
 

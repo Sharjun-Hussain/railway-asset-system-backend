@@ -11,7 +11,7 @@ const assetSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-import { syncAssetToRAG } from "../services/ragSyncService.js";
+import { syncAssetToRAG, removeFromRAG } from "../services/ragSyncService.js";
 
 assetSchema.post("save", function (doc) {
   syncAssetToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
@@ -20,6 +20,12 @@ assetSchema.post("save", function (doc) {
 assetSchema.post("findOneAndUpdate", function (doc) {
   if (doc) {
     syncAssetToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+  }
+});
+
+assetSchema.post("findOneAndDelete", function (doc) {
+  if (doc) {
+    removeFromRAG({ relatedAssetId: doc._id }).catch(err => console.error("RAG Sync Error:", err));
   }
 });
 

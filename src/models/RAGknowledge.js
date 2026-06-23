@@ -8,6 +8,8 @@ const ragKnowledgeSchema = new mongoose.Schema({
   divisionId: { type: mongoose.Schema.Types.ObjectId, ref: "Division" },
   stationId: { type: mongoose.Schema.Types.ObjectId, ref: "Station" },
   warehouseId: { type: mongoose.Schema.Types.ObjectId, ref: "Warehouse" },
+  transactionId: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
+  stockId: { type: mongoose.Schema.Types.ObjectId, ref: "Stock" },
   allowedRoles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role" }],
   createdAt: { type: Date, default: Date.now }
 });

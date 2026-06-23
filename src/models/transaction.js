@@ -46,11 +46,21 @@ const transactionSchema = new mongoose.Schema({
     }
 });
 
-import { syncTransactionToRAG } from "../services/ragSyncService.js";
+import { syncTransactionToRAG, removeFromRAG } from "../services/ragSyncService.js";
 
 // Auto-sync historical transactions to RAG on creation
 transactionSchema.post("save", function (doc) {
   syncTransactionToRAG(doc._id).catch(err => console.error("RAG Sync Error:", err));
+});
+
+// Auto-remove from RAG on deletion
+transactionSchema.post("findOneAndDelete", function (doc) {
+  if (doc) removeFromRAG({ transactionId: doc._id });
+});
+
+transactionSchema.post("deleteMany", function () {
+  const query = this.getQuery();
+  if (query._id) removeFromRAG({ transactionId: query._id });
 });
 
 export default mongoose.model("Transaction", transactionSchema);

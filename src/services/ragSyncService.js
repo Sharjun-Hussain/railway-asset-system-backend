@@ -66,7 +66,7 @@ Location: Station ${stock.warehouseId.stationId?.name || 'Unknown'}`;
     });
 
     await RAGknowledge.findOneAndUpdate(
-      { relatedAssetId: stock.assetId._id, warehouseId: stock.warehouseId._id, source: "Warehouse Stock" },
+      { stockId: stock._id, source: "Warehouse Stock" },
       {
         source: "Warehouse Stock",
         content,
@@ -74,6 +74,8 @@ Location: Station ${stock.warehouseId.stationId?.name || 'Unknown'}`;
         warehouseId: stock.warehouseId._id,
         stationId: stock.warehouseId.stationId?._id || null,
         divisionId: stock.warehouseId.stationId?.divisionId?._id || null,
+        relatedAssetId: stock.assetId._id,
+        stockId: stock._id,
       },
       { upsert: true, new: true }
     );
@@ -114,14 +116,20 @@ Remarks: ${txn.remarks || 'None'}`;
       input: content,
     });
 
-    await RAGknowledge.create({
-      source: "Transaction Log",
-      content,
-      embedding: embeddingResponse.data[0].embedding,
-      warehouseId: txn.warehouseId._id,
-      stationId: txn.warehouseId.stationId?._id || null,
-      divisionId: txn.warehouseId.stationId?.divisionId?._id || null,
-    });
+    await RAGknowledge.findOneAndUpdate(
+      { transactionId: txn._id, source: "Transaction Log" },
+      {
+        source: "Transaction Log",
+        content,
+        embedding: embeddingResponse.data[0].embedding,
+        warehouseId: txn.warehouseId._id,
+        stationId: txn.warehouseId.stationId?._id || null,
+        divisionId: txn.warehouseId.stationId?.divisionId?._id || null,
+        relatedAssetId: txn.assetId._id,
+        transactionId: txn._id,
+      },
+      { upsert: true, new: true }
+    );
   } catch (error) {
     console.error("Background RAG Sync Error (Transaction):", error);
   }
@@ -206,5 +214,13 @@ Status: ${warehouse.is_active ? 'Active' : 'Inactive'}`;
     );
   } catch (error) {
     console.error("Background RAG Sync Error (Warehouse):", error);
+  }
+};
+
+export const removeFromRAG = async (query) => {
+  try {
+    await RAGknowledge.deleteMany(query);
+  } catch (error) {
+    console.error("RAG Removal Error:", error);
   }
 };
