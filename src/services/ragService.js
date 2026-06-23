@@ -20,14 +20,21 @@ export const queryRAG = async (prompt, user) => {
 
     const filterConditions = [];
 
-    if (user.divisionId) {
-      filterConditions.push({ divisionId: user.divisionId });
-    }
-    if (user.stationId) {
-      filterConditions.push({ stationId: user.stationId });
-    }
-    if (user.warehouseIds && user.warehouseIds.length > 0) {
-      filterConditions.push({ warehouseId: { $in: user.warehouseIds } });
+    // Bypass strict scoping for high-level administrative roles
+    const isGlobalAdmin = user.roles?.some(role => 
+      role.name === 'Super Admin' || role.name === 'Auditor'
+    );
+
+    if (!isGlobalAdmin) {
+      if (user.divisionId) {
+        filterConditions.push({ divisionId: user.divisionId });
+      }
+      if (user.stationId) {
+        filterConditions.push({ stationId: user.stationId });
+      }
+      if (user.warehouseIds && user.warehouseIds.length > 0) {
+        filterConditions.push({ warehouseId: { $in: user.warehouseIds } });
+      }
     }
 
     let matchFilter = undefined;
