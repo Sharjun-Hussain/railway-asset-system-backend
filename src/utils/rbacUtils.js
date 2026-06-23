@@ -7,7 +7,7 @@ import Station from '../models/station.js';
  */
 const isGlobalUser = (user) => {
     try {
-        return user.roles?.some(r => r.name === 'Super Admin');
+        return user.roles?.some(r => r.name === 'Super Admin' || r.name === 'Auditor');
     } catch (err) {
         console.error("Error in isGlobalUser:", err);
         return false;

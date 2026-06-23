@@ -43,6 +43,12 @@ export const createUsers = async (roleMap, stationMap, divisionMap, warehouseMap
       divisionId: divisionMap["Colombo"],
       stationId: stationMap["Colombo Fort"],
       warehouseIds: [warehouseMap["Fort Mechanical Store"]]
+    },
+    {
+      full_name: "System Auditor",
+      email: "auditor@slrail.lk",
+      password_hash,
+      roles: [roleMap["Auditor"]]
     }
   ];
 };

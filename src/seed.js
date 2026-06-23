@@ -8,9 +8,10 @@ import Warehouse from './models/warehouse.js';
 import User from './models/user.js';
 import Category from './models/category.js';
 import SubCategory from './models/subcategory.js';
-import Product from './models/product.js';
+import Asset from './models/asset.js';
 import Stock from './models/stock.js';
 import StockTransaction from './models/stocktransaction.js';
+import Transaction from './models/transaction.js';
 import Permission from './models/permission.js';
 import Role from './models/role.js';
 
@@ -28,9 +29,10 @@ dotenv.config();
 
 const clearData = async () => {
   try {
+    await Transaction.deleteMany();
     await StockTransaction.deleteMany();
     await Stock.deleteMany();
-    await Product.deleteMany();
+    await Asset.deleteMany();
     await SubCategory.deleteMany();
     await Category.deleteMany();
     await User.deleteMany();
@@ -101,8 +103,8 @@ const seedData = async () => {
     console.log('SubCategories seeded...');
 
     const productData = createProducts(categoryMap, subCategoryMap);
-    await Product.insertMany(productData);
-    console.log('Products seeded...');
+    await Asset.insertMany(productData);
+    console.log('Assets seeded...');
 
     const userData = await createUsers(roleMap, stationMap, divisionMap, warehouseMap);
     await User.insertMany(userData);

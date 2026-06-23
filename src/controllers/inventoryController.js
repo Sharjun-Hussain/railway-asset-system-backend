@@ -2,6 +2,9 @@ import Stock from "../models/stock.js";
 import Transaction from "../models/transaction.js";
 import Asset from "../models/asset.js";
 import AuditLog from "../models/auditLog.js";
+import Warehouse from "../models/warehouse.js";
+import Station from "../models/station.js";
+import Division from "../models/division.js";
 import { getAllowedWarehouseIds } from "../utils/rbacUtils.js";
 
 
@@ -116,8 +119,30 @@ export const getTransactions = async (req, res) => {
 
         const transactions = await Transaction.find(query)
             .populate("assetId", "asset_name qr_code")
-            .populate("warehouseId", "warehouse_name")
-            .populate("toWarehouseId", "warehouse_name")
+            .populate({
+                path: "warehouseId",
+                select: "warehouse_name stationId",
+                populate: {
+                    path: "stationId",
+                    select: "station_name divisionId",
+                    populate: {
+                        path: "divisionId",
+                        select: "division_name"
+                    }
+                }
+            })
+            .populate({
+                path: "toWarehouseId",
+                select: "warehouse_name stationId",
+                populate: {
+                    path: "stationId",
+                    select: "station_name divisionId",
+                    populate: {
+                        path: "divisionId",
+                        select: "division_name"
+                    }
+                }
+            })
             .populate("performedBy", "full_name")
             .sort({ createdAt: -1 });
         res.json(transactions);
