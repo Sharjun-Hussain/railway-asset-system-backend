@@ -16,7 +16,7 @@ import {
     getPermissions, createPermission,
     getRoles, createRole, updateRole, deleteRole
 } from '../controllers/roleController.js';
-import { getUsers, updateUser, inviteUser, getMe } from '../controllers/authController.js';
+import { getUsers, updateUser, inviteUser, getMe, deleteUser } from '../controllers/authController.js';
 import { getAuditLogs } from '../controllers/auditController.js';
 import { protect, hasPermission, checkScope } from '../middlewares/authmiddleware.js';
 import { handleRagQuery, getRagHistory } from '../controllers/ragController.js';
@@ -49,7 +49,8 @@ router.route('/users')
     .post(protect, hasPermission('user', 'manage'), inviteUser);
 
 router.route('/users/:id')
-    .put(protect, hasPermission('user', 'manage'), updateUser);
+    .put(protect, hasPermission('user', 'manage'), updateUser)
+    .delete(protect, hasPermission('user', 'manage'), deleteUser);
 
 // --- Location Routes ---
 router.route('/divisions')

@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import sendEmail from '../utils/sendEmail.js';
 import { logActivity } from './auditController.js';
-import { syncUserToRAG } from '../services/ragSyncService.js';
+import { syncUserToRAG, removeFromRAG } from '../services/ragSyncService.js';
 
 const generateAccessToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_ACCESS_SECRET, {
@@ -259,6 +259,31 @@ export const updateUser = async (req, res) => {
     syncUserToRAG(user._id);
 
     res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Prevent deleting the Super Admin or yourself
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    // Log Activity
+    await logActivity(req, 'System Administration', 'DELETE_USER', {
+      targetUser: user.email,
+    });
+
+    removeFromRAG({ relatedAssetId: user._id, source: "System User" });
+
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

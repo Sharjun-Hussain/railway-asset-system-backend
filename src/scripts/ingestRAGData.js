@@ -105,13 +105,16 @@ Remarks: ${txn.remarks || 'None'}`;
       });
 
       await RAGknowledge.findOneAndUpdate(
-        { source: "Transaction Log (Stock History)", content: { $regex: txn.referenceNo } }, // Use reference no to match
+        { transactionId: txn._id, source: "Transaction Log" },
         {
-          source: "Transaction Log (Stock History)",
+          source: "Transaction Log",
           content,
           embedding: embeddingResponse.data[0].embedding,
           warehouseId: txn.warehouseId._id,
-          // Since it's a historical log, we tag it to the warehouse where it happened
+          stationId: txn.warehouseId.stationId?._id || null,
+          divisionId: txn.warehouseId.stationId?.divisionId?._id || null,
+          relatedAssetId: txn.assetId._id,
+          transactionId: txn._id,
         },
         { upsert: true, new: true }
       );
