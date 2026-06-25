@@ -14,7 +14,10 @@ export const protect = async (req, res, next) => {
         .populate({
           path: 'roles',
           populate: { path: 'permissions' }
-        });
+        })
+        .populate('divisionId')
+        .populate('stationId')
+        .populate('warehouseIds');
 
       if (!req.user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });

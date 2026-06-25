@@ -10,6 +10,8 @@ import Station from "../models/station.js";
 import Warehouse from "../models/warehouse.js";
 import Transaction from "../models/transaction.js";
 import Division from "../models/division.js";
+import User from "../models/user.js";
+import Role from "../models/role.js";
 
 dotenv.config();
 
@@ -203,7 +205,42 @@ Status: ${warehouse.is_active ? 'Active' : 'Inactive'}`;
       );
     }
     console.log(`Ingested ${warehouses.length} warehouses.`);
+    // 7. Ingest Users
+    const users = await mongoose.model("User").find({}).populate('roles divisionId stationId warehouseIds');
+    for (const user of users) {
+      const roleNames = user.roles?.map(r => r.name).join(", ") || 'None';
+      const divisionName = user.divisionId?.division_name || 'N/A';
+      const stationName = user.stationId?.station_name || 'N/A';
+      const warehouseNames = user.warehouseIds?.map(w => w.warehouse_name).join(", ") || 'N/A';
 
+      const content = `System User Profile
+Name: ${user.full_name}
+Email: ${user.email}
+Roles: ${roleNames}
+Division: ${divisionName}
+Station: ${stationName}
+Warehouses: ${warehouseNames}
+Status: ${user.isActive ? 'Active' : 'Inactive'}`;
+
+      const embeddingResponse = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: content,
+      });
+
+      await RAGknowledge.findOneAndUpdate(
+        { source: "System User", relatedAssetId: user._id },
+        {
+          source: "System User",
+          content,
+          embedding: embeddingResponse.data[0].embedding,
+          relatedAssetId: user._id,
+          divisionId: user.divisionId?._id || null,
+          stationId: user.stationId?._id || null,
+        },
+        { upsert: true, new: true }
+      );
+    }
+    console.log(`Ingested ${users.length} users.`);
   } catch (error) {
     console.error("Error ingesting data:", error);
   }

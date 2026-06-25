@@ -5,6 +5,7 @@ import Stock from "../models/stock.js";
 import Transaction from "../models/transaction.js";
 import Division from "../models/division.js";
 import Station from "../models/station.js";
+import User from "../models/user.js";
 import Warehouse from "../models/warehouse.js";
 
 const openai = new OpenAI({
@@ -214,6 +215,51 @@ Status: ${warehouse.is_active ? 'Active' : 'Inactive'}`;
     );
   } catch (error) {
     console.error("Background RAG Sync Error (Warehouse):", error);
+  }
+};
+
+export const syncUserToRAG = async (userId) => {
+  try {
+    const user = await User.findById(userId)
+      .populate('roles')
+      .populate('divisionId')
+      .populate('stationId')
+      .populate('warehouseIds');
+    if (!user) return;
+
+    const roleNames = user.roles?.map(r => r.name).join(", ") || 'None';
+    const divisionName = user.divisionId?.division_name || 'N/A';
+    const stationName = user.stationId?.station_name || 'N/A';
+    const warehouseNames = user.warehouseIds?.map(w => w.warehouse_name).join(", ") || 'N/A';
+
+    const content = `System User Profile
+Name: ${user.full_name}
+Email: ${user.email}
+Roles: ${roleNames}
+Division: ${divisionName}
+Station: ${stationName}
+Warehouses: ${warehouseNames}
+Status: ${user.isActive ? 'Active' : 'Inactive'}`;
+
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: content,
+    });
+
+    await RAGknowledge.findOneAndUpdate(
+      { source: "System User", relatedAssetId: user._id }, // Using relatedAssetId to store user._id
+      {
+        source: "System User",
+        content,
+        embedding: embeddingResponse.data[0].embedding,
+        relatedAssetId: user._id,
+        divisionId: user.divisionId?._id || null,
+        stationId: user.stationId?._id || null
+      },
+      { upsert: true, new: true }
+    );
+  } catch (error) {
+    console.error("Background RAG Sync Error (User):", error);
   }
 };
 

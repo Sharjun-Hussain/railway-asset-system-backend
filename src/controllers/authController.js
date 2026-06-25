@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import sendEmail from '../utils/sendEmail.js';
 import { logActivity } from './auditController.js';
+import { syncUserToRAG } from '../services/ragSyncService.js';
 
 const generateAccessToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_ACCESS_SECRET, {
@@ -104,6 +105,8 @@ export const registerUser = async (req, res) => {
     });
 
     if (user) {
+      syncUserToRAG(user._id);
+      
       res.status(201).json({
         _id: user._id,
         full_name: user.full_name,
@@ -253,6 +256,8 @@ export const updateUser = async (req, res) => {
       updates: Object.keys(req.body)
     }, user._id);
 
+    syncUserToRAG(user._id);
+
     res.json({ message: 'User updated successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -356,6 +361,9 @@ export const acceptInvitation = async (req, res) => {
     user.invitationExpire = undefined;
 
     await user.save();
+    
+    syncUserToRAG(user._id);
+
     res.status(200).json({ message: 'Account activated successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
